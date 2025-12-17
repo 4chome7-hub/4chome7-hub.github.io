@@ -8,7 +8,7 @@ const hiraganaData = [
     { char: 'か', hint: 'カメ' },
     { char: 'き', hint: 'キリン' },
     { char: 'く', hint: 'クマ' },
-    { char: 'け', 'hint': 'ケムシ' },
+    { char: 'け', hint: 'ケムシ' },
     { char: 'こ', hint: 'コアラ' },
     { char: 'さ', hint: 'サル' },
     { char: 'し', hint: 'シカ' },
@@ -44,8 +44,8 @@ const hiraganaData = [
     { char: 'れ', hint: 'レッサーパンダ' },
     { char: 'ろ', hint: 'ロウソク' },
     { char: 'わ', hint: 'ワニ' },
-    { char: 'を', hint: 'を' }, // 助詞のためそのまま
-    { char: 'ん', hint: 'ん' }  // 発音のためそのまま
+    { char: 'を', hint: 'を' }, 
+    { char: 'ん', hint: 'ん' }  
 ];
 
 const hiraganaChar = document.getElementById('hiragana-char');
@@ -55,28 +55,27 @@ const nextButton = document.getElementById('next-button');
 
 let currentHiragana = null;
 let hintTimeout = null;
+let autoNextTimeout = null; // 自動遷移用のタイマー管理
 let timerInterval = null;
 
 /**
  * 新しいひらがなを選んで表示し、タイマーを開始する
  */
 function startNewRound() {
-    // 既存のタイマーとヒントをクリア
+    // すべてのタイマーをクリア（連打防止）
     clearTimeout(hintTimeout);
+    clearTimeout(autoNextTimeout);
     clearInterval(timerInterval);
+    
     hintText.textContent = '';
     timerText.textContent = '';
     
-    // 1. ランダムにひらがなを選択
     const randomIndex = Math.floor(Math.random() * hiraganaData.length);
     currentHiragana = hiraganaData[randomIndex];
     
-    // 2. ひらがなを表示
     hiraganaChar.textContent = currentHiragana.char;
     
     let timeRemaining = 5;
-    
-    // 3. タイマー表示を開始
     timerText.textContent = `ヒントまで ${timeRemaining} 秒`;
     
     timerInterval = setInterval(() => {
@@ -85,13 +84,12 @@ function startNewRound() {
             timerText.textContent = `ヒントまで ${timeRemaining} 秒`;
         } else {
             clearInterval(timerInterval);
-            timerText.textContent = 'ヒント表示！';
+            timerText.textContent = 'ヒント！';
         }
-    }, 1000); // 1秒ごとに更新
+    }, 1000);
     
-    // 4. 5秒後にヒントを表示
+    // 5秒後にヒントを表示
     hintTimeout = setTimeout(() => {
-        // ヒントの言葉を絵文字に置き換えて表示 (絵文字は環境に依存します)
         let hintDisplay = '';
         switch(currentHiragana.hint) {
             case 'アリ': hintDisplay = '🐜 アリ'; break;
@@ -138,16 +136,21 @@ function startNewRound() {
             case 'レッサーパンダ': hintDisplay = '🐼 レッサー'; break;
             case 'ロウソク': hintDisplay = '🕯️ ロウソク'; break;
             case 'ワニ': hintDisplay = '🐊 ワニ'; break;
-            default: hintDisplay = currentHiragana.hint; // 絵文字がない場合はそのまま表示
+            default: hintDisplay = currentHiragana.hint;
         }
         
         hintText.textContent = `${currentHiragana.char} は... ${hintDisplay}！`;
-        nextButton.textContent = '次のひらがなへ';
+
+        // 【追加】ヒント表示の5秒後に自動で次へ
+        autoNextTimeout = setTimeout(() => {
+            startNewRound();
+        }, 5000);
+
     }, 5000);
 }
 
-// ボタンクリックで次のラウンドへ
+// 手動で次へ進むことも可能
 nextButton.addEventListener('click', startNewRound);
 
-// アプリ開始時の初回実行
+// アプリ開始
 startNewRound();
