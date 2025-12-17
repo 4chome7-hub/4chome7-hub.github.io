@@ -4,24 +4,258 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ひらがな学習アプリ</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --bg-color: #f0f8ff;
+            --card-bg: #ffffff;
+            --primary-color: #4682b4;
+            --accent-color: #ff6347;
+            --hint-color: #3cb371;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+            overflow: hidden;
+        }
+
+        #app {
+            text-align: center;
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .title {
+            color: var(--accent-color);
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .hiragana-display {
+            width: 200px;
+            height: 200px;
+            border: 6px solid var(--primary-color);
+            border-radius: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 1.5rem;
+            background-color: #fffacd;
+            position: relative;
+        }
+
+        #hiragana-char {
+            font-size: 120px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .info-area {
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        #timer-text {
+            font-size: 1.2rem;
+            color: #ff8c00;
+            font-weight: bold;
+        }
+
+        #hint-text {
+            font-size: 2rem;
+            color: var(--hint-color);
+            font-weight: bold;
+            min-height: 3rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #hint-text.visible {
+            opacity: 1;
+        }
+
+        #next-button {
+            margin-top: 1rem;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            box-shadow: 0 4px 0 #d44e38;
+        }
+
+        #next-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #d44e38;
+        }
+
+        /* カウントダウンバー */
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 100%;
+            background: var(--accent-color);
+            transition: width 1s linear;
+        }
+    </style>
 </head>
 <body>
     <div id="app">
-        <h1 class="title">ひらがなをおぼえよう！</h1>
+        <h1 class="title">ひらがな クイズ</h1>
+
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
 
         <div class="hiragana-display">
-            <p id="hiragana-char">スタート</p>
+            <p id="hiragana-char">...</p>
         </div>
 
         <div class="info-area">
-            <p id="timer-text"></p>
-            <p id="hint-text"></p>
+            <div id="timer-text"></div>
+            <div id="hint-text"></div>
         </div>
 
-        <button id="next-button">次のひらがなへ</button>
+        <button id="next-button">つぎへ</button>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        const hiraganaData = [
+            { char: 'あ', word: 'アリ', emoji: '🐜' },
+            { char: 'い', word: 'イヌ', emoji: '🐕' },
+            { char: 'う', word: 'ウシ', emoji: '🐄' },
+            { char: 'え', word: 'エビ', emoji: '🍤' },
+            { char: 'お', word: 'オニ', emoji: '👹' },
+            { char: 'か', word: 'カメ', emoji: '🐢' },
+            { char: 'き', word: 'キリン', emoji: '🦒' },
+            { char: 'く', word: 'クマ', emoji: '🐻' },
+            { char: 'け', word: 'ケムシ', emoji: '🐛' },
+            { char: 'こ', word: 'コアラ', emoji: '🐨' },
+            { char: 'さ', word: 'サル', emoji: '🐒' },
+            { char: 'し', word: 'シカ', emoji: '🦌' },
+            { char: 'す', word: 'スズメ', emoji: '🐦' },
+            { char: 'せ', word: 'セミ', emoji: '🦗' },
+            { char: 'そ', word: 'ゾウ', emoji: '🐘' },
+            { char: 'た', word: 'タコ', emoji: '🐙' },
+            { char: 'ち', word: 'チョウ', emoji: '🦋' },
+            { char: 'つ', word: 'ツル', emoji: '🦢' },
+            { char: 'て', word: 'テントウムシ', emoji: '🐞' },
+            { char: 'と', word: 'トラ', emoji: '🐅' },
+            { char: 'な', word: 'ナマケモノ', emoji: '🦥' },
+            { char: 'に', word: 'ニワトリ', emoji: '🐔' },
+            { char: 'ぬ', word: 'ヌイグルミ', emoji: '🧸' },
+            { char: 'ね', word: 'ネコ', emoji: '🐈' },
+            { char: 'の', word: 'ノコギリ', emoji: '⚙️' },
+            { char: 'は', word: 'ハチ', emoji: '🐝' },
+            { char: 'ひ', word: 'ヒツジ', emoji: '🐑' },
+            { char: 'ふ', word: 'フクロウ', emoji: '🦉' },
+            { char: 'へ', word: 'ヘビ', emoji: '🐍' },
+            { char: 'ほ', word: 'ホタル', emoji: '✨' },
+            { char: 'ま', word: 'マメ', emoji: '🫘' },
+            { char: 'み', word: 'ミミズ', emoji: '🪱' },
+            { char: 'む', word: 'ムカデ', emoji: '🐛' },
+            { char: 'め', word: 'メダカ', emoji: '🐟' },
+            { char: 'も', word: 'モグラ', emoji: '🕳️' },
+            { char: 'や', word: 'ヤギ', emoji: '🐐' },
+            { char: 'ゆ', word: 'ユリ', emoji: '🌸' },
+            { char: 'よ', word: 'ヨット', emoji: '⛵' },
+            { char: 'ら', word: 'ライオン', emoji: '🦁' },
+            { char: 'り', word: 'リス', emoji: '🐿️' },
+            { char: 'る', word: 'ルビー', emoji: '💎' },
+            { char: 'れ', word: 'レッサーパンダ', emoji: '🐼' },
+            { char: 'ろ', word: 'ロウソク', emoji: '🕯️' },
+            { char: 'わ', word: 'ワニ', emoji: '🐊' },
+            { char: 'を', word: '（を）', emoji: '⚓' },
+            { char: 'ん', word: '（ん）', emoji: '🔔' }
+        ];
+
+        const hiraganaCharEl = document.getElementById('hiragana-char');
+        const hintTextEl = document.getElementById('hint-text');
+        const timerTextEl = document.getElementById('timer-text');
+        const nextButton = document.getElementById('next-button');
+        const progressBar = document.getElementById('progress-bar');
+
+        let hintTimeout = null;
+        let autoNextTimeout = null;
+        let timerInterval = null;
+
+        function startNewRound() {
+            // クリーンアップ
+            clearTimeout(hintTimeout);
+            clearTimeout(autoNextTimeout);
+            clearInterval(timerInterval);
+
+            hintTextEl.textContent = '';
+            hintTextEl.classList.remove('visible');
+            
+            // ランダム選択
+            const data = hiraganaData[Math.floor(Math.random() * hiraganaData.length)];
+            hiraganaCharEl.textContent = data.char;
+
+            // タイマー設定 (5秒)
+            let seconds = 5;
+            timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
+            progressBar.style.transition = 'none';
+            progressBar.style.width = '100%';
+            
+            // 描画を待ってからアニメーション開始
+            setTimeout(() => {
+                progressBar.style.transition = 'width 5s linear';
+                progressBar.style.width = '0%';
+            }, 50);
+
+            timerInterval = setInterval(() => {
+                seconds--;
+                if (seconds > 0) {
+                    timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
+                } else {
+                    clearInterval(timerInterval);
+                    timerTextEl.textContent = 'こたえは...';
+                }
+            }, 1000);
+
+            // 5秒後のヒント表示
+            hintTimeout = setTimeout(() => {
+                hintTextEl.textContent = `${data.emoji} ${data.word}`;
+                hintTextEl.classList.add('visible');
+
+                // さらに自動で次へ
+                autoNextTimeout = setTimeout(() => {
+                    startNewRound();
+                }, 7000);
+            }, 5000);
+        }
+
+        nextButton.addEventListener('click', () => {
+            startNewRound();
+        });
+
+        // 初回起動
+        window.onload = startNewRound;
+    </script>
 </body>
 </html>
