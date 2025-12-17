@@ -141,10 +141,10 @@ function startNewRound() {
         
         hintText.textContent = `${currentHiragana.char} は... ${hintDisplay}！`;
 
-        // 【追加】ヒント表示の5秒後に自動で次へ
+        // 【追加】自動で次へ
         autoNextTimeout = setTimeout(() => {
             startNewRound();
-        }, 5000);
+        }, 7000);
 
     }, 5000);
 }
