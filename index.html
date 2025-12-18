@@ -88,17 +88,18 @@
         }
 
         #hint-image {
-            max-width: 120px;
-            max-height: 120px;
+            max-width: 140px;
+            max-height: 140px;
             border-radius: 12px;
             margin-top: 5px;
             display: none;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         #hint-text.visible, #hint-image.visible {
             opacity: 1;
-            display: block;
         }
 
         #next-button {
@@ -176,14 +177,14 @@
             { char: 'そ', word: 'ゾウ', emoji: '🐘' },
             { char: 'た', word: 'タコ', emoji: '🐙' },
             { char: 'ち', word: 'チョウ', emoji: '🦋' },
-            { char: 'つ', word: 'ツル', emoji: '🦢' },
+            { char: 'つ', word: 'ツル', emoji: '🦢', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgZp-s1fldW8Ygusv-c5awbWYBWP0swzsOMCAnhCUYCNdiEO7W3VSLadHSsXwWX0ZZlmMcZLe2S8Hzs_3MTduKeghKCFPko0p2sJ31b220ItWGgXylvfX832lfCcCTvfO6LcxKzhghAVic/s400/animal_tsuru.png' },
             { char: 'て', word: 'テントウムシ', emoji: '🐞' },
             { char: 'と', word: 'トラ', emoji: '🐅' },
             { char: 'な', word: 'ナマケモノ', emoji: '🦥' },
             { char: 'に', word: 'ニワトリ', emoji: '🐔' },
             { char: 'ぬ', word: 'ヌイグルミ', emoji: '🧸' },
             { char: 'ね', word: 'ネコ', emoji: '🐈' },
-            { char: 'の', word: 'ノコギリ', emoji: '⚙️' },
+            { char: 'の', word: 'ノコギリ', emoji: '⚙️', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiDURGIYCfcff4uzsYY_nLUvINeZ8xI6zEBvMLqwO39XElSmXiYrAkYE7cmdNr5GzbsnU929rDjJdg0IfAnl6AinLc7yo0YN2VlZ5tlg2TS_Idhlc8L9LJrW50_-R2WdIs85Wd6r_HlHFs/s400/nokogiri.png' },
             { char: 'は', word: 'ハチ', emoji: '🐝' },
             { char: 'ひ', word: 'ヒツジ', emoji: '🐑' },
             { char: 'ふ', word: 'フクロウ', emoji: '🦉' },
@@ -191,7 +192,7 @@
             { char: 'ほ', word: 'ホタル', emoji: '✨', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi7b1eStvk2uQpi6emv_SK2YL2Kmy8EJHduWrKSJ1w3RjW1k4IRZrchQo3m6WHYwEoH3Pq8fglmla7sLJDXiO_61qzUJ1FFBO3ayqrGH4L662t-s36VmS7mzOAwHzCGISI5oJKAlOrHgVA/s400/bug_hotaru.png' },
             { char: 'ま', word: 'マメ', emoji: '🫘' },
             { char: 'み', word: 'ミミズ', emoji: '🪱' },
-            { char: 'む', word: 'ムカデ', emoji: '🐛' },
+            { char: 'む', word: 'ムカデ', emoji: '🐛', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjwEkr_yVnXcFxd890UhidxZ3bRpyon85uEU3nsNkAX6UpDjbCCns4XrJjfnLfv-xq-rpY7ufOlA9CsBsgdG4mctrRvX2GxKOMWHyUo-mzyVTcS1d_LUSBxO_6C-edlxyyt8NIj4rMQjSDp/s400/bug_mukade.png' },
             { char: 'め', word: 'メダカ', emoji: '🐟' },
             { char: 'も', word: 'モグラ', emoji: '🕳️' },
             { char: 'や', word: 'ヤギ', emoji: '🐐' },
@@ -225,6 +226,7 @@
 
             hintTextEl.textContent = '';
             hintTextEl.classList.remove('visible');
+            hintImageEl.classList.remove('visible');
             hintImageEl.style.display = 'none';
             hintImageEl.src = '';
             
@@ -247,19 +249,21 @@
                     timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
                 } else {
                     clearInterval(timerInterval);
-                    timerTextEl.textContent = 'こたえは...';
+                    timerTextEl.textContent = 'ヒントは...';
                 }
             }, 1000);
 
             hintTimeout = setTimeout(() => {
-                hintTextEl.textContent = `${data.emoji} ${data.word}`;
-                hintTextEl.classList.add('visible');
-
                 if (data.imageUrl) {
+                    hintTextEl.textContent = data.word;
                     hintImageEl.src = data.imageUrl;
                     hintImageEl.style.display = 'block';
-                    hintImageEl.classList.add('visible');
+                    setTimeout(() => hintImageEl.classList.add('visible'), 10);
+                } else {
+                    hintTextEl.textContent = `${data.emoji} ${data.word}`;
                 }
+                
+                hintTextEl.classList.add('visible');
 
                 autoNextTimeout = setTimeout(() => {
                     startNewRound();
