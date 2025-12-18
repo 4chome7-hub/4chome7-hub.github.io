@@ -193,15 +193,15 @@
             { char: 'ま', word: 'マメ', emoji: '🫘' },
             { char: 'み', word: 'ミミズ', emoji: '🪱' },
             { char: 'む', word: 'ムカデ', emoji: '🐛', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjwEkr_yVnXcFxd890UhidxZ3bRpyon85uEU3nsNkAX6UpDjbCCns4XrJjfnLfv-xq-rpY7ufOlA9CsBsgdG4mctrRvX2GxKOMWHyUo-mzyVTcS1d_LUSBxO_6C-edlxyyt8NIj4rMQjSDp/s400/bug_mukade.png' },
-            { char: 'め', word: 'メダカ', emoji: '🐟' },
+            { char: 'め', word: 'めがね', emoji: '👓' },
             { char: 'も', word: 'モグラ', emoji: '🕳️' },
             { char: 'や', word: 'ヤギ', emoji: '🐐' },
-            { char: 'ゆ', word: 'ユリ', emoji: '🌸' },
+            { char: 'ゆ', word: 'ユキダルマ', emoji: '⛄' },
             { char: 'よ', word: 'ヨット', emoji: '⛵' },
             { char: 'ら', word: 'ライオン', emoji: '🦁' },
             { char: 'り', word: 'リス', emoji: '🐿️' },
-            { char: 'る', word: 'ルビー', emoji: '💎' },
-            { char: 'れ', word: 'レッサーパンダ', emoji: '🐼' },
+            { char: 'る', word: 'ルーレット', emoji: '🎡', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjhQtJUOa-zX5TJXZe43lICa_jPcT4siaA6jmjc-JG8pNbE8YS8P8C5Tp21FTko-XUbRmJ9fbzm9BBUeu9xORBF8tPseV-Z7cM-j36iB6b4IXIEPBqCd7jA9dSs9BGOEgfV035RRuB4wcE/s400/roulette.png' },
+            { char: 'れ', word: 'れもん', emoji: '🍋' },
             { char: 'ろ', word: 'ロウソク', emoji: '🕯️' },
             { char: 'わ', word: 'ワニ', emoji: '🐊' },
             { char: 'を', word: '（を）', emoji: '⚓' },
@@ -255,11 +255,14 @@
 
             hintTimeout = setTimeout(() => {
                 if (data.imageUrl) {
+                    // 画像がある場合は絵文字を表示せず、画像と文字を表示
                     hintTextEl.textContent = data.word;
                     hintImageEl.src = data.imageUrl;
                     hintImageEl.style.display = 'block';
+                    // 画像の読み込み完了を待たずにクラス付与（transition用）
                     setTimeout(() => hintImageEl.classList.add('visible'), 10);
                 } else {
+                    // 画像がない場合は従来通り絵文字と文字を表示
                     hintTextEl.textContent = `${data.emoji} ${data.word}`;
                 }
                 
