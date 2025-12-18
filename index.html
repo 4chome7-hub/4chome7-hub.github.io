@@ -21,7 +21,7 @@
             min-height: 100vh;
             margin: 0;
             background-color: var(--bg-color);
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         #app {
@@ -32,6 +32,9 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             width: 90%;
             max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .title {
@@ -48,7 +51,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 0 auto 1.5rem;
+            margin-bottom: 1.5rem;
             background-color: #fffacd;
             position: relative;
         }
@@ -61,11 +64,13 @@
         }
 
         .info-area {
-            height: 100px;
+            min-height: 180px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
+            align-items: center;
             gap: 0.5rem;
+            width: 100%;
         }
 
         #timer-text {
@@ -75,16 +80,25 @@
         }
 
         #hint-text {
-            font-size: 2rem;
+            font-size: 1.8rem;
             color: var(--hint-color);
             font-weight: bold;
-            min-height: 3rem;
             opacity: 0;
             transition: opacity 0.3s ease;
         }
 
-        #hint-text.visible {
+        #hint-image {
+            max-width: 120px;
+            max-height: 120px;
+            border-radius: 12px;
+            margin-top: 5px;
+            display: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        #hint-text.visible, #hint-image.visible {
             opacity: 1;
+            display: block;
         }
 
         #next-button {
@@ -105,7 +119,6 @@
             box-shadow: 0 2px 0 #d44e38;
         }
 
-        /* カウントダウンバー */
         .progress-container {
             width: 100%;
             height: 8px;
@@ -138,6 +151,7 @@
         <div class="info-area">
             <div id="timer-text"></div>
             <div id="hint-text"></div>
+            <img id="hint-image" src="" alt="ヒント画像" onerror="this.style.display='none'">
         </div>
 
         <button id="next-button">つぎへ</button>
@@ -157,8 +171,8 @@
             { char: 'こ', word: 'コアラ', emoji: '🐨' },
             { char: 'さ', word: 'サル', emoji: '🐒' },
             { char: 'し', word: 'シカ', emoji: '🦌' },
-            { char: 'す', word: 'スズメ', emoji: '🐦' },
-            { char: 'せ', word: 'セミ', emoji: '🦗' },
+            { char: 'す', word: 'スズメ', emoji: '🐦', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEigFrGTrd_XfJZ4QgZqFdN_V2ycWLgU2BSSvSZk4rgGBK1cP5mm-6GK1XIOZUZ-uy6PBrg6QGAM-Fi7aK13A-t1E1_AbD3a0AOQUT5J6qaP14-7dFVqa_Fbit0k7E97nObf1id_CPtfJVM/s400/bird_suzume.png' },
+            { char: 'せ', word: 'セミ', emoji: '🦗', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgpamKqt1yh0GF0fQxiqCp3oWkvCjgS8I55cOnQ9I4ARPlaoV5hmaJxE1AaKS04rWpNCjFAAJQbQcaFhQ4Vr_4i4bkIzYuxoE3qCIKGuBkTp3v3it03S32a4f4jUZLGXOK6gs45XuEDh0ge/s400/mushi_aburazemi.png' },
             { char: 'そ', word: 'ゾウ', emoji: '🐘' },
             { char: 'た', word: 'タコ', emoji: '🐙' },
             { char: 'ち', word: 'チョウ', emoji: '🦋' },
@@ -174,7 +188,7 @@
             { char: 'ひ', word: 'ヒツジ', emoji: '🐑' },
             { char: 'ふ', word: 'フクロウ', emoji: '🦉' },
             { char: 'へ', word: 'ヘビ', emoji: '🐍' },
-            { char: 'ほ', word: 'ホタル', emoji: '✨' },
+            { char: 'ほ', word: 'ホタル', emoji: '✨', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi7b1eStvk2uQpi6emv_SK2YL2Kmy8EJHduWrKSJ1w3RjW1k4IRZrchQo3m6WHYwEoH3Pq8fglmla7sLJDXiO_61qzUJ1FFBO3ayqrGH4L662t-s36VmS7mzOAwHzCGISI5oJKAlOrHgVA/s400/bug_hotaru.png' },
             { char: 'ま', word: 'マメ', emoji: '🫘' },
             { char: 'み', word: 'ミミズ', emoji: '🪱' },
             { char: 'む', word: 'ムカデ', emoji: '🐛' },
@@ -195,6 +209,7 @@
 
         const hiraganaCharEl = document.getElementById('hiragana-char');
         const hintTextEl = document.getElementById('hint-text');
+        const hintImageEl = document.getElementById('hint-image');
         const timerTextEl = document.getElementById('timer-text');
         const nextButton = document.getElementById('next-button');
         const progressBar = document.getElementById('progress-bar');
@@ -204,25 +219,23 @@
         let timerInterval = null;
 
         function startNewRound() {
-            // クリーンアップ
             clearTimeout(hintTimeout);
             clearTimeout(autoNextTimeout);
             clearInterval(timerInterval);
 
             hintTextEl.textContent = '';
             hintTextEl.classList.remove('visible');
+            hintImageEl.style.display = 'none';
+            hintImageEl.src = '';
             
-            // ランダム選択
             const data = hiraganaData[Math.floor(Math.random() * hiraganaData.length)];
             hiraganaCharEl.textContent = data.char;
 
-            // タイマー設定 (5秒)
             let seconds = 5;
             timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
             progressBar.style.transition = 'none';
             progressBar.style.width = '100%';
             
-            // 描画を待ってからアニメーション開始
             setTimeout(() => {
                 progressBar.style.transition = 'width 5s linear';
                 progressBar.style.width = '0%';
@@ -234,19 +247,23 @@
                     timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
                 } else {
                     clearInterval(timerInterval);
-                    timerTextEl.textContent = 'ヒントは';
+                    timerTextEl.textContent = 'こたえは...';
                 }
             }, 1000);
 
-            // 5秒後のヒント表示
             hintTimeout = setTimeout(() => {
                 hintTextEl.textContent = `${data.emoji} ${data.word}`;
                 hintTextEl.classList.add('visible');
 
-                // さらに自動で次へ
+                if (data.imageUrl) {
+                    hintImageEl.src = data.imageUrl;
+                    hintImageEl.style.display = 'block';
+                    hintImageEl.classList.add('visible');
+                }
+
                 autoNextTimeout = setTimeout(() => {
                     startNewRound();
-                }, 7000);
+                }, 2000);
             }, 5000);
         }
 
@@ -254,7 +271,6 @@
             startNewRound();
         });
 
-        // 初回起動
         window.onload = startNewRound;
     </script>
 </body>
