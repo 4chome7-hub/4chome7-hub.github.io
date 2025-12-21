@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ひらがな学習アプリ</title>
+    <title>ひらがな学習アプリ - ステップ学習</title>
     <style>
         :root {
             --bg-color: #f0f8ff;
@@ -11,6 +11,7 @@
             --primary-color: #4682b4;
             --accent-color: #ff6347;
             --hint-color: #3cb371;
+            --border-color: #e0e0e0;
         }
 
         body {
@@ -27,37 +28,81 @@
         #app {
             text-align: center;
             background-color: var(--card-bg);
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: 24px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 400px;
+            width: 95%;
+            max-width: 450px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        .title {
-            color: var(--accent-color);
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
+        .settings-area {
+            width: 100%;
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .settings-title {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .group-selector {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+
+        .group-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .group-item input {
+            cursor: pointer;
+        }
+
+        .control-btns {
+            margin-top: 8px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .mini-btn {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: #fff;
         }
 
         .hiragana-display {
-            width: 200px;
-            height: 200px;
+            width: 180px;
+            height: 180px;
             border: 6px solid var(--primary-color);
             border-radius: 30px;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             background-color: #fffacd;
             position: relative;
         }
 
         #hiragana-char {
-            font-size: 120px;
+            font-size: 110px;
             font-weight: bold;
             color: var(--primary-color);
             margin: 0;
@@ -119,13 +164,7 @@
             border: none;
             border-radius: 50px;
             cursor: pointer;
-            transition: transform 0.2s, background-color 0.2s;
             box-shadow: 0 4px 0 #d44e38;
-        }
-
-        #next-button:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #d44e38;
         }
 
         .progress-container {
@@ -143,11 +182,28 @@
             background: var(--accent-color);
             transition: width 1s linear;
         }
+
+        #error-msg {
+            color: red;
+            font-size: 0.8rem;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div id="app">
-        <h1 class="title">ひらがな クイズ</h1>
+        <div class="settings-area">
+            <div class="settings-title">練習する「行（ぎょう）」をえらぼう</div>
+            <div class="group-selector" id="group-selector">
+                <!-- JavaScriptで生成 -->
+            </div>
+            <div class="control-btns">
+                <button class="mini-btn" onclick="selectAll(true)">ぜんぶ</button>
+                <button class="mini-btn" onclick="selectAll(false)">リセット</button>
+            </div>
+        </div>
+
+        <div id="error-msg">練習するものを1つ以上選んでね！</div>
 
         <div class="progress-container">
             <div id="progress-bar"></div>
@@ -168,53 +224,59 @@
 
     <script>
         const hiraganaData = [
-            { char: 'あ', word: 'アリ', emoji: '🐜' },
-            { char: 'い', word: 'イヌ', emoji: '🐕' },
-            { char: 'う', word: 'ウシ', emoji: '🐄' },
-            { char: 'え', word: 'エビ', emoji: '🍤' },
-            { char: 'お', word: 'オニ', emoji: '👹' },
-            { char: 'か', word: 'カメ', emoji: '🐢' },
-            { char: 'き', word: 'キリン', emoji: '🦒' },
-            { char: 'く', word: 'クマ', emoji: '🐻' },
-            { char: 'け', word: 'ケーキ', emoji: '🍰' },
-            { char: 'こ', word: 'コアラ', emoji: '🐨' },
-            { char: 'さ', word: 'サル', emoji: '🐒' },
-            { char: 'し', word: 'シカ', emoji: '🦌' },
-            { char: 'す', word: 'スズメ', emoji: '🐦', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEigFrGTrd_XfJZ4QgZqFdN_V2ycWLgU2BSSvSZk4rgGBK1cP5mm-6GK1XIOZUZ-uy6PBrg6QGAM-Fi7aK13A-t1E1_AbD3a0AOQUT5J6qaP14-7dFVqa_Fbit0k7E97nObf1id_CPtfJVM/s400/bird_suzume.png' },
-            { char: 'せ', word: 'セミ', emoji: '🦗', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgpamKqt1yh0GF0fQxiqCp3oWkvCjgS8I55cOnQ9I4ARPlaoV5hmaJxE1AaKS04rWpNCjFAAJQbQcaFhQ4Vr_4i4bkIzYuxoE3qCIKGuBkTp3v3it03S32a4f4jUZLGXOK6gs45XuEDh0ge/s400/mushi_aburazemi.png' },
-            { char: 'そ', word: 'そり', emoji: '🛷' },
-            { char: 'た', word: 'タコ', emoji: '🐙' },
-            { char: 'ち', word: 'チョウ', emoji: '🦋' },
-            { char: 'つ', word: 'ツル', emoji: '🦢', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgZp-s1fldW8Ygusv-c5awbWYBWP0swzsOMCAnhCUYCNdiEO7W3VSLadHSsXwWX0ZZlmMcZLe2S8Hzs_3MTduKeghKCFPko0p2sJ31b220ItWGgXylvfX832lfCcCTvfO6LcxKzhghAVic/s400/animal_tsuru.png' },
-            { char: 'て', word: 'テントウムシ', emoji: '🐞' },
-            { char: 'と', word: 'トラ', emoji: '🐅' },
-            { char: 'な', word: 'ナマケモノ', emoji: '🦥' },
-            { char: 'に', word: 'ニワトリ', emoji: '🐔' },
-            { char: 'ぬ', word: 'ヌイグルミ', emoji: '🧸' },
-            { char: 'ね', word: 'ネコ', emoji: '🐈' },
-            { char: 'の', word: 'ノコギリ', emoji: '⚙️', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiDURGIYCfcff4uzsYY_nLUvINeZ8xI6zEBvMLqwO39XElSmXiYrAkYE7cmdNr5GzbsnU929rDjJdg0IfAnl6AinLc7yo0YN2VlZ5tlg2TS_Idhlc8L9LJrW50_-R2WdIs85Wd6r_HlHFs/s400/nokogiri.png' },
-            { char: 'は', word: 'ハチ', emoji: '🐝' },
-            { char: 'ひ', word: 'ヒツジ', emoji: '🐑' },
-            { char: 'ふ', word: 'フクロウ', emoji: '🦉' },
-            { char: 'へ', word: 'ヘビ', emoji: '🐍' },
-            { char: 'ほ', word: 'ホタル', emoji: '✨', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi7b1eStvk2uQpi6emv_SK2YL2Kmy8EJHduWrKSJ1w3RjW1k4IRZrchQo3m6WHYwEoH3Pq8fglmla7sLJDXiO_61qzUJ1FFBO3ayqrGH4L662t-s36VmS7mzOAwHzCGISI5oJKAlOrHgVA/s400/bug_hotaru.png' },
-            { char: 'ま', word: 'マメ', emoji: '🫘' },
-            { char: 'み', word: 'ミミズ', emoji: '🪱' },
-            { char: 'む', word: 'ムカデ', emoji: '🐛', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjwEkr_yVnXcFxd890UhidxZ3bRpyon85uEU3nsNkAX6UpDjbCCns4XrJjfnLfv-xq-rpY7ufOlA9CsBsgdG4mctrRvX2GxKOMWHyUo-mzyVTcS1d_LUSBxO_6C-edlxyyt8NIj4rMQjSDp/s400/bug_mukade.png' },
-            { char: 'め', word: 'めがね', emoji: '👓' },
-            { char: 'も', word: 'モグラ', emoji: '🕳️' },
-            { char: 'や', word: 'ヤギ', emoji: '🐐' },
-            { char: 'ゆ', word: 'ユキダルマ', emoji: '⛄' },
-            { char: 'よ', word: 'ヨット', emoji: '⛵' },
-            { char: 'ら', word: 'ライオン', emoji: '🦁' },
-            { char: 'り', word: 'リス', emoji: '🐿️' },
-            { char: 'る', word: 'ルーレット', emoji: '🎡', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjhQtJUOa-zX5TJXZe43lICa_jPcT4siaA6jmjc-JG8pNbE8YS8P8C5Tp21FTko-XUbRmJ9fbzm9BBUeu9xORBF8tPseV-Z7cM-j36iB6b4IXIEPBqCd7jA9dSs9BGOEgfV035RRuB4wcE/s400/roulette.png' },
-            { char: 'れ', word: 'れもん', emoji: '🍋' },
-            { char: 'ろ', word: 'ロウソク', emoji: '🕯️' },
-            { char: 'わ', word: 'ワニ', emoji: '🐊' },
-            { char: 'を', word: '（を）', emoji: '⚓' },
-            { char: 'ん', word: '（ん）', emoji: '🔔' }
+            { char: 'あ', word: 'アリ', emoji: '🐜', group: 'あ行' },
+            { char: 'い', word: 'イヌ', emoji: '🐕', group: 'あ行' },
+            { char: 'う', word: 'ウシ', emoji: '🐄', group: 'あ行' },
+            { char: 'え', word: 'エビ', emoji: '🍤', group: 'あ行' },
+            { char: 'お', word: 'オニ', emoji: '👹', group: 'あ行' },
+            { char: 'か', word: 'カメ', emoji: '🐢', group: 'か行' },
+            { char: 'き', word: 'キリン', emoji: '🦒', group: 'か行' },
+            { char: 'く', word: 'クマ', emoji: '🐻', group: 'か行' },
+            { char: 'け', word: 'ケーキ', emoji: '🍰', group: 'か行' },
+            { char: 'こ', word: 'コアラ', emoji: '🐨', group: 'か行' },
+            { char: 'さ', word: 'サル', emoji: '🐒', group: 'さ行' },
+            { char: 'し', word: 'シカ', emoji: '🦌', group: 'さ行' },
+            { char: 'す', word: 'スズメ', emoji: '🐦', group: 'さ行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEigFrGTrd_XfJZ4QgZqFdN_V2ycWLgU2BSSvSZk4rgGBK1cP5mm-6GK1XIOZUZ-uy6PBrg6QGAM-Fi7aK13A-t1E1_AbD3a0AOQUT5J6qaP14-7dFVqa_Fbit0k7E97nObf1id_CPtfJVM/s400/bird_suzume.png' },
+            { char: 'せ', word: 'セミ', emoji: '🦗', group: 'さ行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgpamKqt1yh0GF0fQxiqCp3oWkvCjgS8I55cOnQ9I4ARPlaoV5hmaJxE1AaKS04rWpNCjFAAJQbQcaFhQ4Vr_4i4bkIzYuxoE3qCIKGuBkTp3v3it03S32a4f4jUZLGXOK6gs45XuEDh0ge/s400/mushi_aburazemi.png' },
+            { char: 'そ', word: 'そり', emoji: '🛷', group: 'さ行' },
+            { char: 'た', word: 'タコ', emoji: '🐙', group: 'た行' },
+            { char: 'ち', word: 'チョウ', emoji: '🦋', group: 'た行' },
+            { char: 'つ', word: 'ツル', emoji: '🦢', group: 'た行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgZp-s1fldW8Ygusv-c5awbWYBWP0swzsOMCAnhCUYCNdiEO7W3VSLadHSsXwWX0ZZlmMcZLe2S8Hzs_3MTduKeghKCFPko0p2sJ31b220ItWGgXylvfX832lfCcCTvfO6LcxKzhghAVic/s400/animal_tsuru.png' },
+            { char: 'て', word: 'テントウムシ', emoji: '🐞', group: 'た行' },
+            { char: 'と', word: 'トラ', emoji: '🐅', group: 'た行' },
+            { char: 'な', word: 'ナマケモノ', emoji: '🦥', group: 'な行' },
+            { char: 'に', word: 'ニワトリ', emoji: '🐔', group: 'な行' },
+            { char: 'ぬ', word: 'ヌイグルミ', emoji: '🧸', group: 'な行' },
+            { char: 'ね', word: 'ネコ', emoji: '🐈', group: 'な行' },
+            { char: 'の', word: 'ノコギリ', emoji: '⚙️', group: 'な行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiDURGIYCfcff4uzsYY_nLUvINeZ8xI6zEBvMLqwO39XElSmXiYrAkYE7cmdNr5GzbsnU929rDjJdg0IfAnl6AinLc7yo0YN2VlZ5tlg2TS_Idhlc8L9LJrW50_-R2WdIs85Wd6r_HlHFs/s400/nokogiri.png' },
+            { char: 'は', word: 'ハチ', emoji: '🐝', group: 'は行' },
+            { char: 'ひ', word: 'ヒツジ', emoji: '🐑', group: 'は行' },
+            { char: 'ふ', word: 'フクロウ', emoji: '🦉', group: 'は行' },
+            { char: 'へ', word: 'ヘビ', emoji: '🐍', group: 'は行' },
+            { char: 'ほ', word: 'ホタル', emoji: '✨', group: 'は行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi7b1eStvk2uQpi6emv_SK2YL2Kmy8EJHduWrKSJ1w3RjW1k4IRZrchQo3m6WHYwEoH3Pq8fglmla7sLJDXiO_61qzUJ1FFBO3ayqrGH4L662t-s36VmS7mzOAwHzCGISI5oJKAlOrHgVA/s400/bug_hotaru.png' },
+            { char: 'ま', word: 'マメ', emoji: '🫘', group: 'ま行' },
+            { char: 'み', word: 'ミミズ', emoji: '🪱', group: 'ま行' },
+            { char: 'む', word: 'ムカデ', emoji: '🐛', group: 'ま行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjwEkr_yVnXcFxd890UhidxZ3bRpyon85uEU3nsNkAX6UpDjbCCns4XrJjfnLfv-xq-rpY7ufOlA9CsBsgdG4mctrRvX2GxKOMWHyUo-mzyVTcS1d_LUSBxO_6C-edlxyyt8NIj4rMQjSDp/s400/bug_mukade.png' },
+            { char: 'め', word: 'めがね', emoji: '👓', group: 'ま行' },
+            { char: 'も', word: 'モグラ', emoji: '🕳️', group: 'ま行' },
+            { char: 'や', word: 'ヤギ', emoji: '🐐', group: 'や行' },
+            { char: 'ゆ', word: 'ユキダルマ', emoji: '⛄', group: 'や行' },
+            { char: 'よ', word: 'ヨット', emoji: '⛵', group: 'や行' },
+            { char: 'ら', word: 'ライオン', emoji: '🦁', group: 'ら行' },
+            { char: 'り', word: 'リス', emoji: '🐿️', group: 'ら行' },
+            { char: 'る', word: 'ルーレット', emoji: '🎡', group: 'ら行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjhQtJUOa-zX5TJXZe43lICa_jPcT4siaA6jmjc-JG8pNbE8YS8P8C5Tp21FTko-XUbRmJ9fbzm9BBUeu9xORBF8tPseV-Z7cM-j36iB6b4IXIEPBqCd7jA9dSs9BGOEgfV035RRuB4wcE/s400/roulette.png' },
+            { char: 'れ', word: 'れもん', emoji: '🍋', group: 'ら行' },
+            { char: 'ろ', word: 'ロウソク', emoji: '🕯️', group: 'ら行' },
+            { char: 'わ', word: 'ワニ', emoji: '🐊', group: 'わ行' },
+            { char: 'を', word: '（を）', emoji: '⚓', group: 'わ行' },
+            { char: 'ん', word: '（ん）', emoji: '🔔', group: 'わ行' }
         ];
+
+        const groups = ['あ行', 'か行', 'さ行', 'た行', 'な行', 'は行', 'ま行', 'や行', 'ら行', 'わ行'];
+        const groupMapping = {
+            a: 'あ行', k: 'か行', s: 'さ行', t: 'た行', n: 'な行',
+            h: 'は行', m: 'ま行', y: 'や行', r: 'ら行', w: 'わ行'
+        };
 
         const hiraganaCharEl = document.getElementById('hiragana-char');
         const hintTextEl = document.getElementById('hint-text');
@@ -222,15 +284,61 @@
         const timerTextEl = document.getElementById('timer-text');
         const nextButton = document.getElementById('next-button');
         const progressBar = document.getElementById('progress-bar');
+        const groupSelectorEl = document.getElementById('group-selector');
+        const errorMsgEl = document.getElementById('error-msg');
 
         let hintTimeout = null;
         let autoNextTimeout = null;
         let timerInterval = null;
+        let selectedGroups = ['あ行'];
+
+        // URLパラメータの解析
+        function parseUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const gParam = urlParams.get('g');
+            if (gParam) {
+                const keys = gParam.split(',');
+                const mapped = keys.map(k => groupMapping[k.trim().toLowerCase()]).filter(v => v);
+                if (mapped.length > 0) {
+                    selectedGroups = mapped;
+                }
+            }
+        }
+
+        // 行選択UIの生成
+        function initSelector() {
+            groupSelectorEl.innerHTML = groups.map(g => `
+                <label class="group-item">
+                    <input type="checkbox" value="${g}" ${selectedGroups.includes(g) ? 'checked' : ''} onchange="updateGroups()">
+                    ${g.replace('行', '')}
+                </label>
+            `).join('');
+        }
+
+        function updateGroups() {
+            const checkboxes = groupSelectorEl.querySelectorAll('input:checked');
+            selectedGroups = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (selectedGroups.length === 0) {
+                errorMsgEl.style.display = 'block';
+            } else {
+                errorMsgEl.style.display = 'none';
+                startNewRound();
+            }
+        }
+
+        function selectAll(bool) {
+            const checkboxes = groupSelectorEl.querySelectorAll('input');
+            checkboxes.forEach(cb => cb.checked = bool);
+            updateGroups();
+        }
 
         function startNewRound() {
             clearTimeout(hintTimeout);
             clearTimeout(autoNextTimeout);
             clearInterval(timerInterval);
+
+            if (selectedGroups.length === 0) return;
 
             hintTextEl.textContent = '';
             hintTextEl.classList.remove('visible');
@@ -238,7 +346,9 @@
             hintImageEl.style.display = 'none';
             hintImageEl.src = '';
             
-            const data = hiraganaData[Math.floor(Math.random() * hiraganaData.length)];
+            const filteredData = hiraganaData.filter(d => selectedGroups.includes(d.group));
+            const data = filteredData[Math.floor(Math.random() * filteredData.length)];
+            
             hiraganaCharEl.textContent = data.char;
 
             let seconds = 5;
@@ -273,7 +383,6 @@
                 
                 hintTextEl.classList.add('visible');
 
-                // 【変更】ヒント表示から5秒後に自動で次へ
                 autoNextTimeout = setTimeout(() => {
                     startNewRound();
                 }, 5000);
@@ -281,10 +390,14 @@
         }
 
         nextButton.addEventListener('click', () => {
-            startNewRound();
+            if (selectedGroups.length > 0) startNewRound();
         });
 
-        window.onload = startNewRound;
+        window.onload = () => {
+            parseUrlParams();
+            initSelector();
+            startNewRound();
+        };
     </script>
 </body>
 </html>
