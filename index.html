@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ひらがな学習アプリ - ステップ学習</title>
+    <title>ひらがな学習アプリ - にがてこくふくモード</title>
     <style>
         :root {
             --bg-color: #f0f8ff;
@@ -12,6 +12,7 @@
             --accent-color: #ff6347;
             --hint-color: #3cb371;
             --border-color: #e0e0e0;
+            --master-color: #ffd700;
         }
 
         body {
@@ -68,10 +69,6 @@
             cursor: pointer;
         }
 
-        .group-item input {
-            cursor: pointer;
-        }
-
         .control-btns {
             margin-top: 8px;
             display: flex;
@@ -109,7 +106,7 @@
         }
 
         .info-area {
-            min-height: 220px;
+            min-height: 240px;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -125,13 +122,16 @@
             margin-bottom: 0.5rem;
         }
 
-        #hint-text {
-            font-size: 1.8rem;
-            color: var(--hint-color);
-            font-weight: bold;
+        #hint-content {
             opacity: 0;
             transition: opacity 0.3s ease;
-            line-height: 1.2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #hint-content.visible {
+            opacity: 1;
         }
 
         .emoji-large {
@@ -140,20 +140,45 @@
             margin-bottom: 0.5rem;
         }
 
-        #hint-image {
-            max-width: 160px;
-            max-height: 160px;
-            border-radius: 12px;
-            margin-top: 5px;
-            display: none;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        #hint-word {
+            font-size: 1.8rem;
+            color: var(--hint-color);
+            font-weight: bold;
         }
 
-        #hint-text.visible, #hint-image.visible {
-            opacity: 1;
+        #hint-image {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 12px;
+            margin-top: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
+
+        /* 評価ボタン */
+        .feedback-area {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .feedback-btn {
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+
+        .feedback-btn:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+
+        .btn-good { background-color: #e3f2fd; color: #1976d2; border: 2px solid #1976d2; }
+        .btn-bad { background-color: #fff3e0; color: #f57c00; border: 2px solid #f57c00; }
 
         #next-button {
             margin-top: 1rem;
@@ -194,9 +219,7 @@
     <div id="app">
         <div class="settings-area">
             <div class="settings-title">練習する「行（ぎょう）」をえらぼう</div>
-            <div class="group-selector" id="group-selector">
-                <!-- JavaScriptで生成 -->
-            </div>
+            <div class="group-selector" id="group-selector"></div>
             <div class="control-btns">
                 <button class="mini-btn" onclick="selectAll(true)">ぜんぶ</button>
                 <button class="mini-btn" onclick="selectAll(false)">リセット</button>
@@ -215,11 +238,17 @@
 
         <div class="info-area">
             <div id="timer-text"></div>
-            <div id="hint-text"></div>
-            <img id="hint-image" src="" alt="ヒント画像" onerror="this.style.display='none'">
+            <div id="hint-content">
+                <div id="hint-media"></div>
+                <div id="hint-word"></div>
+                <div class="feedback-area">
+                    <button class="feedback-btn btn-good" onclick="handleFeedback(-1)" title="わかった！">👍</button>
+                    <button class="feedback-btn btn-bad" onclick="handleFeedback(2)" title="むずかしい">🤔</button>
+                </div>
+            </div>
         </div>
 
-        <button id="next-button">つぎへ</button>
+        <button id="next-button" onclick="startNewRound()">つぎへ</button>
     </div>
 
     <script>
@@ -273,39 +302,37 @@
         ];
 
         const groups = ['あ行', 'か行', 'さ行', 'た行', 'な行', 'は行', 'ま行', 'や行', 'ら行', 'わ行'];
-        const groupMapping = {
-            a: 'あ行', k: 'か行', s: 'さ行', t: 'た行', n: 'な行',
-            h: 'は行', m: 'ま行', y: 'や行', r: 'ら行', w: 'わ行'
-        };
+        const groupMapping = { a: 'あ行', k: 'か行', s: 'さ行', t: 'た行', n: 'な行', h: 'は行', m: 'ま行', y: 'や行', r: 'ら行', w: 'わ行' };
+
+        // 各文字の重み管理（初期値は全て5）
+        const masteryWeights = {};
+        hiraganaData.forEach(d => { masteryWeights[d.char] = 5; });
 
         const hiraganaCharEl = document.getElementById('hiragana-char');
-        const hintTextEl = document.getElementById('hint-text');
-        const hintImageEl = document.getElementById('hint-image');
+        const hintContentEl = document.getElementById('hint-content');
+        const hintMediaEl = document.getElementById('hint-media');
+        const hintWordEl = document.getElementById('hint-word');
         const timerTextEl = document.getElementById('timer-text');
-        const nextButton = document.getElementById('next-button');
         const progressBar = document.getElementById('progress-bar');
         const groupSelectorEl = document.getElementById('group-selector');
         const errorMsgEl = document.getElementById('error-msg');
 
+        let currentData = null;
         let hintTimeout = null;
         let autoNextTimeout = null;
         let timerInterval = null;
         let selectedGroups = ['あ行'];
 
-        // URLパラメータの解析
         function parseUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
             const gParam = urlParams.get('g');
             if (gParam) {
                 const keys = gParam.split(',');
                 const mapped = keys.map(k => groupMapping[k.trim().toLowerCase()]).filter(v => v);
-                if (mapped.length > 0) {
-                    selectedGroups = mapped;
-                }
+                if (mapped.length > 0) selectedGroups = mapped;
             }
         }
 
-        // 行選択UIの生成
         function initSelector() {
             groupSelectorEl.innerHTML = groups.map(g => `
                 <label class="group-item">
@@ -318,7 +345,6 @@
         function updateGroups() {
             const checkboxes = groupSelectorEl.querySelectorAll('input:checked');
             selectedGroups = Array.from(checkboxes).map(cb => cb.value);
-            
             if (selectedGroups.length === 0) {
                 errorMsgEl.style.display = 'block';
             } else {
@@ -328,9 +354,35 @@
         }
 
         function selectAll(bool) {
-            const checkboxes = groupSelectorEl.querySelectorAll('input');
-            checkboxes.forEach(cb => cb.checked = bool);
+            groupSelectorEl.querySelectorAll('input').forEach(cb => cb.checked = bool);
             updateGroups();
+        }
+
+        // 評価ボタンの処理
+        function handleFeedback(adjustment) {
+            if (!currentData) return;
+            // 重みを調整 (最小1, 最大15)
+            masteryWeights[currentData.char] = Math.max(1, Math.min(15, masteryWeights[currentData.char] + adjustment));
+            
+            // フィードバックアニメーション代わり
+            const el = document.querySelector(adjustment > 0 ? '.btn-bad' : '.btn-good');
+            el.style.transform = 'scale(1.2)';
+            setTimeout(() => { el.style.transform = 'scale(1)'; }, 200);
+
+            // ボタンを押したら早めに次へ（オプション）
+            // clearTimeout(autoNextTimeout);
+            // autoNextTimeout = setTimeout(startNewRound, 1000);
+        }
+
+        // 重み付けされたランダム選択
+        function getWeightedRandom(dataList) {
+            const totalWeight = dataList.reduce((sum, item) => sum + masteryWeights[item.char], 0);
+            let random = Math.random() * totalWeight;
+            for (const item of dataList) {
+                if (random < masteryWeights[item.char]) return item;
+                random -= masteryWeights[item.char];
+            }
+            return dataList[0];
         }
 
         function startNewRound() {
@@ -340,16 +392,14 @@
 
             if (selectedGroups.length === 0) return;
 
-            hintTextEl.textContent = '';
-            hintTextEl.classList.remove('visible');
-            hintImageEl.classList.remove('visible');
-            hintImageEl.style.display = 'none';
-            hintImageEl.src = '';
+            hintContentEl.classList.remove('visible');
+            hintMediaEl.innerHTML = '';
+            hintWordEl.textContent = '';
             
             const filteredData = hiraganaData.filter(d => selectedGroups.includes(d.group));
-            const data = filteredData[Math.floor(Math.random() * filteredData.length)];
+            currentData = getWeightedRandom(filteredData);
             
-            hiraganaCharEl.textContent = data.char;
+            hiraganaCharEl.textContent = currentData.char;
 
             let seconds = 5;
             timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
@@ -367,31 +417,26 @@
                     timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
                 } else {
                     clearInterval(timerInterval);
-                    timerTextEl.textContent = 'ヒントは...';
+                    timerTextEl.textContent = 'こたえ！';
                 }
             }, 1000);
 
             hintTimeout = setTimeout(() => {
-                if (data.imageUrl) {
-                    hintTextEl.textContent = data.word;
-                    hintImageEl.src = data.imageUrl;
-                    hintImageEl.style.display = 'block';
-                    setTimeout(() => hintImageEl.classList.add('visible'), 10);
+                if (currentData.imageUrl) {
+                    hintMediaEl.innerHTML = `<img id="hint-image" src="${currentData.imageUrl}" alt="hint">`;
+                    hintWordEl.textContent = currentData.word;
                 } else {
-                    hintTextEl.innerHTML = `<span class="emoji-large">${data.emoji}</span>${data.word}`;
+                    hintMediaEl.innerHTML = `<span class="emoji-large">${currentData.emoji}</span>`;
+                    hintWordEl.textContent = currentData.word;
                 }
                 
-                hintTextEl.classList.add('visible');
+                hintContentEl.classList.add('visible');
 
                 autoNextTimeout = setTimeout(() => {
                     startNewRound();
                 }, 5000);
             }, 5000);
         }
-
-        nextButton.addEventListener('click', () => {
-            if (selectedGroups.length > 0) startNewRound();
-        });
 
         window.onload = () => {
             parseUrlParams();
