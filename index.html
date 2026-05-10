@@ -297,6 +297,11 @@
             { char: 'ぶ', word: 'ブタ', emoji: '🐷', group: 'ば行' },
             { char: 'べ', word: 'ベロ', emoji: '👅', group: 'ば行' },
             { char: 'ぼ', word: 'ボール', emoji: '⚽', group: 'ば行' },
+            { char: 'ぱ', word: 'パンダ', emoji: '🐼', group: 'ぱ行' },
+            { char: 'ぴ', word: 'ピザ', emoji: '🍕', group: 'ぱ行' },
+            { char: 'ぷ', word: 'プリン', emoji: '🍮', group: 'ぱ行' },
+            { char: 'ぺ', word: 'ペンギン', emoji: '🐧', group: 'ぱ行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh5eDyuXj0Hi34W3PjsBpjSC-5S1Jy_BFhxl1eb9gIfN9ST__ngCrt4dFGjiOEddSSA5KgaQb_G4Yx4ag1XqYVb5bfUd0Tvg9AXScs6JGEnWvhHgaFTED6Wed6NCC0A-KRAdJ_pnOvA2K6M/s400/penguin01_king.png' },
+            { char: 'ぽ', word: 'ポスト', emoji: '📮', group: 'ぱ行' },
             { char: 'ま', word: 'マメ', emoji: '🫘', group: 'ま行' },
             { char: 'み', word: 'ミミズ', emoji: '🪱', group: 'ま行' },
             { char: 'む', word: 'ムカデ', emoji: '🐛', group: 'ま行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjwEkr_yVnXcFxd890UhidxZ3bRpyon85uEU3nsNkAX6UpDjbCCns4XrJjfnLfv-xq-rpY7ufOlA9CsBsgdG4mctrRvX2GxKOMWHyUo-mzyVTcS1d_LUSBxO_6C-edlxyyt8NIj4rMQjSDp/s400/bug_mukade.png' },
@@ -315,8 +320,8 @@
             { char: 'ん', word: '（ん）', emoji: '🔔', group: 'わ行' }
         ];
 
-        const groups = ['あ行', 'か行', 'さ行', 'た行', 'な行', 'は行', 'ば行', 'ま行', 'や行', 'ら行', 'わ行'];
-        const groupMapping = { a: 'あ行', k: 'か行', s: 'さ行', t: 'た行', n: 'な行', h: 'は行', b: 'ば行', m: 'ま行', y: 'や行', r: 'ら行', w: 'わ行' };
+        const groups = ['あ行', 'か行', 'さ行', 'た行', 'な行', 'は行', 'ば行', 'ぱ行', 'ま行', 'や行', 'ら行', 'わ行'];
+        const groupMapping = { a: 'あ行', k: 'か行', s: 'さ行', t: 'た行', n: 'な行', h: 'は行', b: 'ば行', p: 'ぱ行', m: 'ま行', y: 'や行', r: 'ら行', w: 'わ行' };
 
         const masteryWeights = {};
         hiraganaData.forEach(d => { masteryWeights[d.char] = 5; });
