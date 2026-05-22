@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>魔法のひらがな</title>
+    <style>
+        body { text-align: center; font-family: sans-serif; padding: 20px; }
+        .character { font-size: 80px; margin: 20px; padding: 20px; border: 2px solid #ccc; display: inline-block; width: 100px; height: 100px; cursor: pointer; }
+        .button-area { margin-top: 30px; }
+        button { font-size: 24px; padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>魔法のひらがな</h1>
+    <div id="display" class="character">か</div>
+    <div class="button-area">
+        <button onclick="changeChar('base')">そのまま</button>
+        <button onclick="changeChar('dakuten')">゛（てんてん）</button>
+        <button onclick="changeChar('handakuten')">゜（まる）</button>
+    </div>
+
+    <script>
+        const map = {
+            'か': { dakuten: 'が', handakuten: 'か' },
+            'さ': { dakuten: 'ざ', handakuten: 'さ' },
+            'た': { dakuten: 'だ', handakuten: 'た' },
+            'は': { dakuten: 'ば', handakuten: 'ぱ' }
+        };
+        let currentBase = 'か';
+
+        function changeChar(type) {
+            const display = document.getElementById('display');
+            if (type === 'base') display.innerText = currentBase;
+            else if (type === 'dakuten') display.innerText = map[currentBase]?.dakuten || currentBase;
+            else if (type === 'handakuten') display.innerText = map[currentBase]?.handakuten || currentBase;
+            
+            // 音声を鳴らす機能を追加可能
+            speechSynthesis.speak(new SpeechSynthesisUtterance(display.innerText));
+        }
+    </script>
+</body>
+</html>
