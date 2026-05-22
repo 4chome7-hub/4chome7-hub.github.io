@@ -317,11 +317,26 @@
             { char: 'ろ', word: 'ロウソク', emoji: '🕯️', group: 'ら行' },
             { char: 'わ', word: 'ワニ', emoji: '🐊', group: 'わ行' },
             { char: 'を', word: '（を）', emoji: '⚓', group: 'わ行' },
-            { char: 'ん', word: '（ん）', emoji: '🔔', group: 'わ行' }
+            { char: 'ん', word: '（ん）', emoji: '🔔', group: 'わ行' },
+            { char: 'が', word: 'ガム', emoji: '🍬', group: 'が行' },
+            { char: 'ぎ', word: 'ギター', emoji: '🎸', group: 'が行' },
+            { char: 'ぐ', word: 'グレープ', emoji: '🍇', group: 'が行' },
+            { char: 'げ', word: 'ゲーム', emoji: '🎮', group: 'が行' },
+            { char: 'ご', word: 'ゴリラ', emoji: '🦍', group: 'が行' },
+            { char: 'ざ', word: 'ザリガニ', emoji: '🦐', group: 'ざ行' },
+            { char: 'じ', word: 'じてんしゃ', emoji: '🚲', group: 'ざ行' },
+            { char: 'ず', word: 'ずかん', emoji: '📖', group: 'ざ行' },
+            { char: 'ぜ', word: 'ゼリー', emoji: '🍮', group: 'ざ行' },
+            { char: 'ぞ', word: 'ぞう', emoji: '🐘', group: 'ざ行' },
+            { char: 'だ', word: 'だるま', emoji: '🎎', group: 'だ行' },
+            { char: 'ぢ', word: '（ぢ）', emoji: '🌀', group: 'だ行' },
+            { char: 'づ', word: '（づ）', emoji: '💧', group: 'だ行' },
+            { char: 'で', word: 'でんしゃ', emoji: '🚃', group: 'だ行' },
+            { char: 'ど', word: 'ドーナツ', emoji: '🍩', group: 'だ行' }
         ];
 
-        const groups = ['あ行', 'か行', 'さ行', 'た行', 'な行', 'は行', 'ば行', 'ぱ行', 'ま行', 'や行', 'ら行', 'わ行'];
-        const groupMapping = { a: 'あ行', k: 'か行', s: 'さ行', t: 'た行', n: 'な行', h: 'は行', b: 'ば行', p: 'ぱ行', m: 'ま行', y: 'や行', r: 'ら行', w: 'わ行' };
+        const groups = ['あ行', 'か行', 'が行', 'さ行', 'ざ行', 'た行', 'だ行', 'な行', 'は行', 'ば行', 'ぱ行', 'ま行', 'や行', 'ら行', 'わ行'];
+        const groupMapping = { a: 'あ行', k: 'か行', g: 'が行', s: 'さ行', z: 'ざ行', t: 'た行', d: 'だ行', n: 'な行', h: 'は行', b: 'ば行', p: 'ぱ行', m: 'ま行', y: 'や行', r: 'ら行', w: 'わ行' };
 
         const masteryWeights = {};
         hiraganaData.forEach(d => { masteryWeights[d.char] = 5; });
