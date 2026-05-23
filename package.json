@@ -1,0 +1,31 @@
+{
+  "name": "4chome7-hub.github.io",
+  "version": "1.0.0",
+  "description": "https://4chome7-hub.github.io/",
+  "main": "playwright.config.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "install-browsers": "playwright install chromium"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/4chome7-hub/4chome7-hub.github.io.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/4chome7-hub/4chome7-hub.github.io/issues"
+  },
+  "homepage": "https://github.com/4chome7-hub/4chome7-hub.github.io#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
