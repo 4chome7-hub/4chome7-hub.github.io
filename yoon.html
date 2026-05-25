@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ひらがな学習 - ようおん・そくおん</title>
+    <style>
+        :root {
+            --bg-color: #f0f8ff;
+            --card-bg: #ffffff;
+            --primary-color: #4682b4;
+            --accent-color: #ff6347;
+            --hint-color: #3cb371;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+            overflow-x: hidden;
+        }
+
+        #app {
+            text-align: center;
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 95%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .settings-area {
+            width: 100%;
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .settings-title {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .group-selector {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+
+        .group-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .control-btns {
+            margin-top: 8px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .mini-btn {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: #fff;
+        }
+
+        .hiragana-display {
+            width: 180px;
+            height: 180px;
+            border: 6px solid var(--primary-color);
+            border-radius: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1rem;
+            background-color: #fffacd;
+        }
+
+        #hiragana-char {
+            font-size: 110px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .info-area {
+            min-height: 260px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        #timer-text {
+            font-size: 1.2rem;
+            color: #ff8c00;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        #hint-content {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 130px;
+        }
+
+        #hint-content.visible {
+            opacity: 1;
+        }
+
+        .emoji-large {
+            display: block;
+            font-size: 4.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        #hint-word {
+            font-size: 1.8rem;
+            color: var(--hint-color);
+            font-weight: bold;
+        }
+
+        #hint-image {
+            max-width: 130px;
+            max-height: 130px;
+            border-radius: 12px;
+            margin-top: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .feedback-area {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .feedback-btn {
+            border: none;
+            border-radius: 50%;
+            width: 65px;
+            height: 65px;
+            font-size: 1.6rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            transition: transform 0.1s, opacity 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .feedback-btn:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+
+        .btn-good { background-color: #e3f2fd; color: #1976d2; border: 2px solid #1976d2; }
+        .btn-bad  { background-color: #fff3e0; color: #f57c00; border: 2px solid #f57c00; }
+
+        #next-button {
+            margin-top: 1rem;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #d44e38;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 100%;
+            background: var(--accent-color);
+            transition: width 1s linear;
+        }
+
+        #error-msg {
+            color: red;
+            font-size: 0.8rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="settings-area">
+            <div class="settings-title">練習する「よみかた」をえらぼう</div>
+            <div class="group-selector" id="group-selector"></div>
+            <div class="control-btns">
+                <button class="mini-btn" onclick="selectAll(true)">ぜんぶ</button>
+                <button class="mini-btn" onclick="selectAll(false)">リセット</button>
+            </div>
+        </div>
+
+        <div id="error-msg">練習するものを1つ以上選んでね！</div>
+
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+
+        <div class="hiragana-display">
+            <p id="hiragana-char">...</p>
+        </div>
+
+        <div class="info-area">
+            <div id="timer-text"></div>
+
+            <div id="hint-content">
+                <div id="hint-media"></div>
+                <div id="hint-word"></div>
+            </div>
+
+            <div class="feedback-area">
+                <button class="feedback-btn btn-good" onclick="handleFeedback(-1)" title="わかった！">👍</button>
+                <button class="feedback-btn btn-bad"  onclick="handleFeedback(2)"  title="むずかしい">🤔</button>
+            </div>
+        </div>
+
+        <button id="next-button" onclick="startNewRound()">つぎへ</button>
+    </div>
+
+    <script>
+        const yoonData = [
+            // きゃ行
+            { char: 'きゃ', word: 'きゃんぷ',     emoji: '⛺', group: 'きゃ行' },
+            { char: 'きゅ', word: 'きゅうり',     emoji: '🥒', group: 'きゃ行' },
+            { char: 'きょ', word: 'きょうりゅう', emoji: '🦕', group: 'きゃ行' },
+            // しゃ行
+            { char: 'しゃ', word: 'しゃしん',     emoji: '📷', group: 'しゃ行' },
+            { char: 'しゅ', word: 'しゅりけん',   emoji: '⭐', group: 'しゃ行' },
+            { char: 'しょ', word: 'しょうぼうしゃ', emoji: '🚒', group: 'しゃ行' },
+            // ちゃ行
+            { char: 'ちゃ', word: 'おちゃ',       emoji: '🍵', group: 'ちゃ行' },
+            { char: 'ちゅ', word: 'ちゅうりっぷ', emoji: '🌷', group: 'ちゃ行' },
+            { char: 'ちょ', word: 'ちょうちょ',   emoji: '🦋', group: 'ちゃ行' },
+            // にゃ行
+            { char: 'にゃ', word: 'にゃんこ',     emoji: '🐱', group: 'にゃ行' },
+            { char: 'にゅ', word: 'にゅうがく',   emoji: '🏫', group: 'にゃ行' },
+            { char: 'にょ', word: '（にょ）',     emoji: '🌀', group: 'にゃ行' },
+            // ひゃ行
+            { char: 'ひゃ', word: 'ひゃく',       emoji: '💯', group: 'ひゃ行' },
+            { char: 'ひゅ', word: '（ひゅ）',     emoji: '💨', group: 'ひゃ行' },
+            { char: 'ひょ', word: 'ひょう',       emoji: '🐆', group: 'ひゃ行' },
+            // みゃ行
+            { char: 'みゃ', word: '（みゃ）',     emoji: '🌀', group: 'みゃ行' },
+            { char: 'みゅ', word: '（みゅ）',     emoji: '🌀', group: 'みゃ行' },
+            { char: 'みょ', word: 'みょうが',     emoji: '🌿', group: 'みゃ行' },
+            // りゃ行
+            { char: 'りゃ', word: '（りゃ）',     emoji: '🌀', group: 'りゃ行' },
+            { char: 'りゅ', word: 'りゅう',       emoji: '🐉', group: 'りゃ行' },
+            { char: 'りょ', word: 'りょこう',     emoji: '✈️', group: 'りゃ行' },
+            // ぎゃ行
+            { char: 'ぎゃ', word: 'ぎゃく',       emoji: '🔄', group: 'ぎゃ行' },
+            { char: 'ぎゅ', word: 'ぎゅうにゅう', emoji: '🥛', group: 'ぎゃ行' },
+            { char: 'ぎょ', word: 'ぎょうざ',     emoji: '🥟', group: 'ぎゃ行' },
+            // じゃ行
+            { char: 'じゃ', word: 'じゃがいも',   emoji: '🥔', group: 'じゃ行' },
+            { char: 'じゅ', word: 'じゅうす',     emoji: '🧃', group: 'じゃ行' },
+            { char: 'じょ', word: 'じょうろ',     emoji: '🪣', group: 'じゃ行' },
+            // びゃ行
+            { char: 'びゃ', word: '（びゃ）',     emoji: '🌀', group: 'びゃ行' },
+            { char: 'びゅ', word: '（びゅ）',     emoji: '🌀', group: 'びゃ行' },
+            { char: 'びょ', word: 'びょういん',   emoji: '🏥', group: 'びゃ行' },
+            // ぴゃ行
+            { char: 'ぴゃ', word: '（ぴゃ）',     emoji: '🌀', group: 'ぴゃ行' },
+            { char: 'ぴゅ', word: '（ぴゅ）',     emoji: '🌀', group: 'ぴゃ行' },
+            { char: 'ぴょ', word: 'ぴょんぴょん', emoji: '🐰', group: 'ぴゃ行' },
+            // っ（促音）- 単語ごとに出題
+            { char: 'きって',   word: 'きって',   emoji: '📮', group: 'っ' },
+            { char: 'ざっし',   word: 'ざっし',   emoji: '📰', group: 'っ' },
+            { char: 'きっぷ',   word: 'きっぷ',   emoji: '🎫', group: 'っ' },
+            { char: 'ゆっくり', word: 'ゆっくり', emoji: '🐢', group: 'っ' },
+            { char: 'はっぱ',   word: 'はっぱ',   emoji: '🍃', group: 'っ' },
+        ];
+
+        const groups = ['きゃ行', 'しゃ行', 'ちゃ行', 'にゃ行', 'ひゃ行', 'みゃ行', 'りゃ行', 'ぎゃ行', 'じゃ行', 'びゃ行', 'ぴゃ行', 'っ'];
+        const groupMapping = { ky: 'きゃ行', sy: 'しゃ行', cy: 'ちゃ行', ny: 'にゃ行', hy: 'ひゃ行', my: 'みゃ行', ry: 'りゃ行', gy: 'ぎゃ行', jy: 'じゃ行', by: 'びゃ行', py: 'ぴゃ行', q: 'っ' };
+
+        const masteryWeights = {};
+        yoonData.forEach(d => { masteryWeights[d.char] = 5; });
+
+        const hiraganaCharEl = document.getElementById('hiragana-char');
+        const hintContentEl  = document.getElementById('hint-content');
+        const hintMediaEl    = document.getElementById('hint-media');
+        const hintWordEl     = document.getElementById('hint-word');
+        const timerTextEl    = document.getElementById('timer-text');
+        const progressBar    = document.getElementById('progress-bar');
+        const groupSelectorEl = document.getElementById('group-selector');
+        const errorMsgEl     = document.getElementById('error-msg');
+
+        let currentData    = null;
+        let hintTimeout    = null;
+        let autoNextTimeout = null;
+        let timerInterval  = null;
+        let selectedGroups = ['きゃ行'];
+
+        function charFontSize(text) {
+            const len = text.length;
+            if (len <= 1) return '110px';
+            if (len === 2) return '68px';
+            if (len === 3) return '50px';
+            return '38px';
+        }
+
+        function parseUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const gParam = urlParams.get('g');
+            if (gParam) {
+                const keys = gParam.split(',');
+                const mapped = keys.map(k => groupMapping[k.trim().toLowerCase()]).filter(v => v);
+                if (mapped.length > 0) selectedGroups = mapped;
+            }
+        }
+
+        function initSelector() {
+            groupSelectorEl.innerHTML = groups.map(g => `
+                <label class="group-item">
+                    <input type="checkbox" value="${g}" ${selectedGroups.includes(g) ? 'checked' : ''} onchange="updateGroups()">
+                    ${g.replace('行', '')}
+                </label>
+            `).join('');
+        }
+
+        function updateGroups() {
+            const checkboxes = groupSelectorEl.querySelectorAll('input:checked');
+            selectedGroups = Array.from(checkboxes).map(cb => cb.value);
+            if (selectedGroups.length === 0) {
+                errorMsgEl.style.display = 'block';
+            } else {
+                errorMsgEl.style.display = 'none';
+                startNewRound();
+            }
+        }
+
+        function selectAll(bool) {
+            groupSelectorEl.querySelectorAll('input').forEach(cb => cb.checked = bool);
+            updateGroups();
+        }
+
+        function handleFeedback(adjustment) {
+            if (!currentData) return;
+            masteryWeights[currentData.char] = Math.max(1, Math.min(15, masteryWeights[currentData.char] + adjustment));
+
+            const el = document.querySelector(adjustment > 0 ? '.btn-bad' : '.btn-good');
+            el.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                el.style.transform = 'scale(1)';
+                startNewRound();
+            }, 150);
+        }
+
+        function getWeightedRandom(dataList) {
+            const totalWeight = dataList.reduce((sum, item) => sum + masteryWeights[item.char], 0);
+            let random = Math.random() * totalWeight;
+            for (const item of dataList) {
+                if (random < masteryWeights[item.char]) return item;
+                random -= masteryWeights[item.char];
+            }
+            return dataList[0];
+        }
+
+        function startNewRound() {
+            clearTimeout(hintTimeout);
+            clearTimeout(autoNextTimeout);
+            clearInterval(timerInterval);
+
+            if (selectedGroups.length === 0) return;
+
+            hintContentEl.classList.remove('visible');
+            hintMediaEl.innerHTML = '';
+            hintWordEl.textContent = '';
+
+            const filteredData = yoonData.filter(d => selectedGroups.includes(d.group));
+            currentData = getWeightedRandom(filteredData);
+
+            hiraganaCharEl.textContent = currentData.char;
+            hiraganaCharEl.style.fontSize = charFontSize(currentData.char);
+
+            let seconds = 5;
+            timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
+            progressBar.style.transition = 'none';
+            progressBar.style.width = '100%';
+
+            setTimeout(() => {
+                progressBar.style.transition = 'width 5s linear';
+                progressBar.style.width = '0%';
+            }, 50);
+
+            timerInterval = setInterval(() => {
+                seconds--;
+                if (seconds > 0) {
+                    timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
+                } else {
+                    clearInterval(timerInterval);
+                    timerTextEl.textContent = 'こたえ！';
+                }
+            }, 1000);
+
+            hintTimeout = setTimeout(() => {
+                if (currentData.imageUrl) {
+                    hintMediaEl.innerHTML = `<img id="hint-image" src="${currentData.imageUrl}" alt="hint">`;
+                } else {
+                    hintMediaEl.innerHTML = `<span class="emoji-large">${currentData.emoji}</span>`;
+                }
+                hintWordEl.textContent = currentData.word;
+                hintContentEl.classList.add('visible');
+
+                autoNextTimeout = setTimeout(() => {
+                    startNewRound();
+                }, 5000);
+            }, 5000);
+        }
+
+        window.onload = () => {
+            parseUrlParams();
+            initSelector();
+            startNewRound();
+        };
+    </script>
+</body>
+</html>
