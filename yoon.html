@@ -85,8 +85,11 @@
         }
 
         .hiragana-display {
-            width: 180px;
-            height: 180px;
+            width: fit-content;
+            min-width: 160px;
+            max-width: 100%;
+            min-height: 120px;
+            padding: 20px 28px;
             border: 6px solid var(--primary-color);
             border-radius: 30px;
             display: flex;
@@ -333,8 +336,10 @@
             const len = text.length;
             if (len <= 1) return '110px';
             if (len === 2) return '68px';
-            if (len === 3) return '50px';
-            return '38px';
+            if (len === 3) return '52px';
+            if (len === 4) return '44px';
+            if (len === 5) return '36px';
+            return '30px';
         }
 
         function parseUrlParams() {
