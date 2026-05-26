@@ -278,12 +278,7 @@
             { char: 'にょ', word: '（にょ）',     emoji: '🌀', group: 'にゃ行' },
             // ひゃ行
             { char: 'ひゃ', word: 'ひゃく',       emoji: '💯', group: 'ひゃ行' },
-            { char: 'ひゅ', word: '（ひゅ）',     emoji: '💨', group: 'ひゃ行' },
             { char: 'ひょ', word: 'ひょう',       emoji: '🐆', group: 'ひゃ行' },
-            // みゃ行
-            { char: 'みゃ', word: '（みゃ）',     emoji: '🌀', group: 'みゃ行' },
-            { char: 'みゅ', word: '（みゅ）',     emoji: '🌀', group: 'みゃ行' },
-            { char: 'みょ', word: 'みょうが',     emoji: '🌿', group: 'みゃ行' },
             // りゃ行
             { char: 'りゃ', word: '（りゃ）',     emoji: '🌀', group: 'りゃ行' },
             { char: 'りゅ', word: 'りゅう',       emoji: '🐉', group: 'りゃ行' },
@@ -296,14 +291,6 @@
             { char: 'じゃ', word: 'じゃがいも',   emoji: '🥔', group: 'じゃ行' },
             { char: 'じゅ', word: 'じゅうす',     emoji: '🧃', group: 'じゃ行' },
             { char: 'じょ', word: 'じょうろ',     emoji: '🪣', group: 'じゃ行' },
-            // びゃ行
-            { char: 'びゃ', word: '（びゃ）',     emoji: '🌀', group: 'びゃ行' },
-            { char: 'びゅ', word: '（びゅ）',     emoji: '🌀', group: 'びゃ行' },
-            { char: 'びょ', word: 'びょういん',   emoji: '🏥', group: 'びゃ行' },
-            // ぴゃ行
-            { char: 'ぴゃ', word: '（ぴゃ）',     emoji: '🌀', group: 'ぴゃ行' },
-            { char: 'ぴゅ', word: '（ぴゅ）',     emoji: '🌀', group: 'ぴゃ行' },
-            { char: 'ぴょ', word: 'ぴょんぴょん', emoji: '🐰', group: 'ぴゃ行' },
             // っ（促音）- 単語ごとに出題
             { char: 'きって',   word: 'きって',   emoji: '📮', group: 'っ' },
             { char: 'ざっし',   word: 'ざっし',   emoji: '📰', group: 'っ' },
@@ -311,8 +298,8 @@
             { char: 'はっぱ',   word: 'はっぱ',   emoji: '🍃', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhZ6_iE5pyMuQaq8b04wQfPBt9QE8TH9XU5i6KCibKSJeC6dHT45Q6dtQI3ATm6yu9oYg2fbIe-FynNQsUXzaQCodxDV1Ep0iWMQ2jcX_13Rj8VibmsYDSuYxryFSZnj3pk-E3uxRn_FxfQ/s400/plant_buna_leaf.png', group: 'っ' },
         ];
 
-        const groups = ['きゃ行', 'しゃ行', 'ちゃ行', 'にゃ行', 'ひゃ行', 'みゃ行', 'りゃ行', 'ぎゃ行', 'じゃ行', 'びゃ行', 'ぴゃ行', 'っ'];
-        const groupMapping = { ky: 'きゃ行', sy: 'しゃ行', cy: 'ちゃ行', ny: 'にゃ行', hy: 'ひゃ行', my: 'みゃ行', ry: 'りゃ行', gy: 'ぎゃ行', jy: 'じゃ行', by: 'びゃ行', py: 'ぴゃ行', q: 'っ' };
+        const groups = ['きゃ行', 'しゃ行', 'ちゃ行', 'にゃ行', 'ひゃ行', 'りゃ行', 'ぎゃ行', 'じゃ行', 'っ'];
+        const groupMapping = { ky: 'きゃ行', sy: 'しゃ行', cy: 'ちゃ行', ny: 'にゃ行', hy: 'ひゃ行', ry: 'りゃ行', gy: 'ぎゃ行', jy: 'じゃ行', q: 'っ' };
 
         const masteryWeights = {};
         yoonData.forEach(d => { masteryWeights[d.char] = 5; });
