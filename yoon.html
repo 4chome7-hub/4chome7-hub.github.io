@@ -408,8 +408,8 @@
             const filteredData = yoonData.filter(d => selectedGroups.includes(d.group));
             currentData = getWeightedRandom(filteredData);
 
-            hiraganaCharEl.textContent = currentData.char;
-            hiraganaCharEl.style.fontSize = charFontSize(currentData.char);
+            hiraganaCharEl.textContent = currentData.word;
+            hiraganaCharEl.style.fontSize = charFontSize(currentData.word);
 
             let seconds = 5;
             timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
@@ -437,7 +437,6 @@
                 } else {
                     hintMediaEl.innerHTML = `<span class="emoji-large">${currentData.emoji}</span>`;
                 }
-                hintWordEl.textContent = currentData.word;
                 hintContentEl.classList.add('visible');
 
                 autoNextTimeout = setTimeout(() => {
