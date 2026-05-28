@@ -218,6 +218,42 @@
             font-size: 0.8rem;
             display: none;
         }
+
+        /* スマホ横向き：2カラムレイアウト */
+        @media (orientation: landscape) and (max-height: 500px) {
+            #app {
+                display: grid;
+                grid-template-columns: auto 1fr;
+                grid-template-areas:
+                    "settings settings"
+                    "error    error"
+                    "progress progress"
+                    "char     info"
+                    "next     next";
+                padding: 0.5rem 0.8rem;
+                column-gap: 1rem;
+                row-gap: 0.25rem;
+                max-height: 100svh;
+                box-sizing: border-box;
+                overflow: hidden;
+            }
+            .settings-area  { grid-area: settings; margin-bottom: 0; padding: 4px 8px; }
+            .settings-title { font-size: 0.7rem; margin-bottom: 2px; }
+            .group-selector { gap: 3px; grid-template-columns: repeat(9, 1fr); }
+            .control-btns   { margin-top: 3px; }
+            #error-msg          { grid-area: error; }
+            .progress-container { grid-area: progress; margin-bottom: 0; height: 5px; }
+            .hiragana-display   { grid-area: char; min-height: 70px; padding: 10px 14px; margin-bottom: 0; align-self: center; }
+            .info-area          { grid-area: info; min-height: unset; justify-content: center; gap: 0.2rem; }
+            #timer-text         { font-size: 1rem; margin-bottom: 0; }
+            #hint-content       { min-height: unset; }
+            .emoji-large        { font-size: 2.5rem; margin-bottom: 0.2rem; }
+            #hint-image         { max-width: 65px; max-height: 65px; }
+            #hint-word          { font-size: 1.1rem; }
+            .feedback-area      { gap: 10px; margin-top: 0; }
+            .feedback-btn       { width: 48px; height: 48px; font-size: 1.2rem; }
+            #next-button        { grid-area: next; margin-top: 0; padding: 6px 20px; font-size: 0.9rem; }
+        }
     </style>
 </head>
 <body>
@@ -318,8 +354,19 @@
         let timerInterval  = null;
         let selectedGroups = [...groups];
 
+        const landscapeMQ = window.matchMedia('(orientation: landscape) and (max-height: 500px)');
+
         function charFontSize(text) {
+            const landscape = landscapeMQ.matches;
             const len = text.length;
+            if (landscape) {
+                if (len <= 1) return '60px';
+                if (len === 2) return '40px';
+                if (len === 3) return '30px';
+                if (len === 4) return '24px';
+                if (len === 5) return '20px';
+                return '17px';
+            }
             if (len <= 1) return '110px';
             if (len === 2) return '68px';
             if (len === 3) return '52px';
@@ -435,6 +482,10 @@
                 }, 5000);
             }, 5000);
         }
+
+        landscapeMQ.addEventListener('change', () => {
+            if (currentData) hiraganaCharEl.style.fontSize = charFontSize(currentData.word);
+        });
 
         window.onload = () => {
             parseUrlParams();
