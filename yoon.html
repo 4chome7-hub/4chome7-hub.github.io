@@ -108,7 +108,7 @@
         }
 
         .info-area {
-            min-height: 260px;
+            min-height: 220px;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -117,12 +117,18 @@
             width: 100%;
         }
 
-        #timer-text {
-            font-size: 1.2rem;
-            color: #ff8c00;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
+        #hint-button {
+            padding: 10px 28px;
+            font-size: 1.1rem;
+            background-color: var(--hint-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #2a7a50;
         }
+
+        #hint-button:active { transform: translateY(3px); box-shadow: none; }
 
         #hint-content {
             opacity: 0;
@@ -197,21 +203,6 @@
             box-shadow: 0 4px 0 #d44e38;
         }
 
-        .progress-container {
-            width: 100%;
-            height: 8px;
-            background: #eee;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-            overflow: hidden;
-        }
-
-        #progress-bar {
-            width: 100%;
-            height: 100%;
-            background: var(--accent-color);
-            transition: width 1s linear;
-        }
 
         #error-msg {
             color: red;
@@ -227,7 +218,6 @@
                 grid-template-areas:
                     "settings settings"
                     "error    error"
-                    "progress progress"
                     "char     info"
                     "next     next";
                 padding: 0.5rem 0.8rem;
@@ -242,10 +232,9 @@
             .group-selector { gap: 3px; grid-template-columns: repeat(4, 1fr); }
             .control-btns   { margin-top: 3px; }
             #error-msg          { grid-area: error; }
-            .progress-container { grid-area: progress; margin-bottom: 0; height: 5px; }
             .hiragana-display   { grid-area: char; min-height: 70px; padding: 10px 14px; margin-bottom: 0; align-self: center; }
             .info-area          { grid-area: info; min-height: unset; justify-content: center; gap: 0.2rem; }
-            #timer-text         { font-size: 1rem; margin-bottom: 0; }
+            #hint-button        { font-size: 0.85rem; padding: 6px 16px; }
             #hint-content       { min-height: unset; }
             .emoji-large        { font-size: 2.5rem; margin-bottom: 0.2rem; }
             #hint-image         { max-width: 65px; max-height: 65px; }
@@ -269,16 +258,12 @@
 
         <div id="error-msg">練習するものを1つ以上選んでね！</div>
 
-        <div class="progress-container">
-            <div id="progress-bar"></div>
-        </div>
-
         <div class="hiragana-display">
             <p id="hiragana-char">...</p>
         </div>
 
         <div class="info-area">
-            <div id="timer-text"></div>
+            <button id="hint-button" onclick="showHint()">ヒントを見る</button>
 
             <div id="hint-content">
                 <div id="hint-media"></div>
@@ -342,15 +327,11 @@
         const hintContentEl  = document.getElementById('hint-content');
         const hintMediaEl    = document.getElementById('hint-media');
         const hintWordEl     = document.getElementById('hint-word');
-        const timerTextEl    = document.getElementById('timer-text');
-        const progressBar    = document.getElementById('progress-bar');
+        const hintButtonEl   = document.getElementById('hint-button');
         const groupSelectorEl = document.getElementById('group-selector');
         const errorMsgEl     = document.getElementById('error-msg');
 
         let currentData    = null;
-        let hintTimeout    = null;
-        let autoNextTimeout = null;
-        let timerInterval  = null;
         let selectedGroups = [...groups];
 
         const landscapeMQ = window.matchMedia('(orientation: landscape) and (max-height: 500px)');
@@ -409,6 +390,16 @@
             updateGroups();
         }
 
+        function showHint() {
+            if (currentData.imageUrl) {
+                hintMediaEl.innerHTML = `<img id="hint-image" src="${currentData.imageUrl}" alt="hint">`;
+            } else {
+                hintMediaEl.innerHTML = `<span class="emoji-large">${currentData.emoji}</span>`;
+            }
+            hintContentEl.classList.add('visible');
+            hintButtonEl.style.visibility = 'hidden';
+        }
+
         function handleFeedback(adjustment) {
             if (!currentData) return;
             masteryWeights[currentData.char] = Math.max(1, Math.min(15, masteryWeights[currentData.char] + adjustment));
@@ -432,10 +423,6 @@
         }
 
         function startNewRound() {
-            clearTimeout(hintTimeout);
-            clearTimeout(autoNextTimeout);
-            clearInterval(timerInterval);
-
             if (selectedGroups.length === 0) return;
 
             hintContentEl.classList.remove('visible');
@@ -447,39 +434,7 @@
 
             hiraganaCharEl.textContent = currentData.word;
             hiraganaCharEl.style.fontSize = charFontSize(currentData.word);
-
-            let seconds = 5;
-            timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
-            progressBar.style.transition = 'none';
-            progressBar.style.width = '100%';
-
-            setTimeout(() => {
-                progressBar.style.transition = 'width 5s linear';
-                progressBar.style.width = '0%';
-            }, 50);
-
-            timerInterval = setInterval(() => {
-                seconds--;
-                if (seconds > 0) {
-                    timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
-                } else {
-                    clearInterval(timerInterval);
-                    timerTextEl.textContent = 'こたえ！';
-                }
-            }, 1000);
-
-            hintTimeout = setTimeout(() => {
-                if (currentData.imageUrl) {
-                    hintMediaEl.innerHTML = `<img id="hint-image" src="${currentData.imageUrl}" alt="hint">`;
-                } else {
-                    hintMediaEl.innerHTML = `<span class="emoji-large">${currentData.emoji}</span>`;
-                }
-                hintContentEl.classList.add('visible');
-
-                autoNextTimeout = setTimeout(() => {
-                    startNewRound();
-                }, 5000);
-            }, 5000);
+            hintButtonEl.style.visibility = 'visible';
         }
 
         landscapeMQ.addEventListener('change', () => {
