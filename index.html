@@ -218,6 +218,44 @@
             font-size: 0.8rem;
             display: none;
         }
+
+        /* ほかのアプリへのリンク */
+        .other-apps {
+            width: 100%;
+            margin-top: 1.2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .other-apps-title {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .other-apps-links {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .other-apps-links a {
+            flex: 1;
+            max-width: 140px;
+            padding: 10px 0;
+            font-size: 1rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+            background-color: var(--hint-color);
+            border-radius: 50px;
+            box-shadow: 0 4px 0 #2e8b57;
+        }
+
+        .other-apps-links a:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
@@ -258,6 +296,14 @@
         </div>
 
         <button id="next-button" onclick="startNewRound()">つぎへ</button>
+
+        <div class="other-apps">
+            <div class="other-apps-title">けいさんカード</div>
+            <div class="other-apps-links">
+                <a href="addcards.html">たしざん</a>
+                <a href="subcards.html">ひきざん</a>
+            </div>
+        </div>
     </div>
 
     <script>
