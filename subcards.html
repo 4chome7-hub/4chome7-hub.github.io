@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ひきざんカード - カウントつき</title>
+    <style>
+        :root {
+            --bg-color: #f0f8ff;
+            --card-bg: #ffffff;
+            --primary-color: #4682b4;
+            --accent-color: #ff6347;
+            --answer-color: #3cb371;
+            --border-color: #e0e0e0;
+            --count-color: #ff8c00;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+            overflow-x: hidden;
+        }
+
+        #app {
+            text-align: center;
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 95%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            color: var(--primary-color);
+            margin: 0 0 0.5rem;
+        }
+
+        /* カウント表示 */
+        .count-area {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            background: #fff7e6;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 8px 0;
+            margin-bottom: 1rem;
+        }
+
+        .count-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .count-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .count-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--count-color);
+            line-height: 1.1;
+        }
+
+        /* カード本体 */
+        .flash-card {
+            width: 100%;
+            min-height: 200px;
+            border: 6px solid var(--primary-color);
+            border-radius: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1rem;
+            background-color: #fffacd;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.08s;
+            box-sizing: border-box;
+            padding: 1rem;
+        }
+
+        .flash-card:active {
+            transform: scale(0.98);
+        }
+
+        #card-text {
+            font-size: 3.4rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        #card-text.answered {
+            color: var(--answer-color);
+        }
+
+        .hint-text {
+            font-size: 0.9rem;
+            color: #999;
+            min-height: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 1.05rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            color: white;
+        }
+
+        #next-button {
+            background-color: var(--accent-color);
+            box-shadow: 0 4px 0 #d44e38;
+            flex: 1;
+            max-width: 200px;
+        }
+
+        #reset-button {
+            background-color: #90a4ae;
+            box-shadow: 0 4px 0 #607d8b;
+        }
+
+        button:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+
+        .home-link {
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>ひきざんカード</h1>
+
+        <div class="count-area">
+            <div class="count-box">
+                <span class="count-label">といた かず</span>
+                <span class="count-value" id="solved-count">0</span>
+            </div>
+        </div>
+
+        <div class="flash-card" id="flash-card" onclick="onCardTap()">
+            <p id="card-text">スタート</p>
+        </div>
+
+        <div class="hint-text" id="hint-text">カードをタップしてね！</div>
+
+        <div class="btn-row">
+            <button id="next-button" onclick="nextProblem(event)">つぎの もんだい</button>
+            <button id="reset-button" onclick="resetAll(event)">リセット</button>
+        </div>
+
+        <a class="home-link" href="index.html">← ホームへ</a>
+    </div>
+
+    <script>
+        // ------- 出題データ（10までのひきざん・ランダム表示）-------
+        // ひかれる数は10まで、答えは0以上（くりさがりなし）
+        function buildDeck() {
+            const deck = [];
+            for (let a = 1; a <= 10; a++) {
+                for (let b = 1; b <= a; b++) {
+                    deck.push({ a, b });   // 答え a - b は 0〜9
+                }
+            }
+            // シャッフル（Fisher–Yates）
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        }
+
+        // ------- 状態 -------
+        let deck = buildDeck();
+        let deckIndex = 0;
+        let current = null;      // { a, b }
+        let showingAnswer = false;
+        let started = false;
+        let solvedCount = 0;     // 答えを見た（＝1問こなした）回数
+
+        const cardTextEl = document.getElementById('card-text');
+        const hintTextEl = document.getElementById('hint-text');
+        const solvedCountEl = document.getElementById('solved-count');
+
+        function drawNext() {
+            if (deckIndex >= deck.length) {
+                // 一巡したら再シャッフル
+                deck = buildDeck();
+                deckIndex = 0;
+            }
+            current = deck[deckIndex++];
+        }
+
+        function showProblem() {
+            showingAnswer = false;
+            cardTextEl.classList.remove('answered');
+            cardTextEl.textContent = `${current.a} − ${current.b} =`;
+            hintTextEl.textContent = 'こたえを かんがえて、タップ！';
+        }
+
+        function showAnswer() {
+            showingAnswer = true;
+            cardTextEl.classList.add('answered');
+            cardTextEl.textContent = `${current.a} − ${current.b} = ${current.a - current.b}`;
+            hintTextEl.textContent = 'つぎは カードか「つぎの もんだい」をタップ';
+        }
+
+        // カードをタップしたとき
+        function onCardTap() {
+            if (!started) {
+                // 最初のタップでスタート
+                started = true;
+                drawNext();
+                showProblem();
+                return;
+            }
+
+            if (!showingAnswer) {
+                // 問題 → 答えを表示（1問こなした）
+                showAnswer();
+                solvedCount++;
+                solvedCountEl.textContent = solvedCount;
+            } else {
+                // 答え → 次の問題へ
+                drawNext();
+                showProblem();
+            }
+        }
+
+        // 「つぎの もんだい」ボタン
+        function nextProblem(e) {
+            e.stopPropagation();
+            if (!started) {
+                started = true;
+            }
+            drawNext();
+            showProblem();
+        }
+
+        // 「リセット」ボタン
+        function resetAll(e) {
+            e.stopPropagation();
+            deck = buildDeck();
+            deckIndex = 0;
+            current = null;
+            showingAnswer = false;
+            started = false;
+            solvedCount = 0;
+            solvedCountEl.textContent = '0';
+            cardTextEl.classList.remove('answered');
+            cardTextEl.textContent = 'スタート';
+            hintTextEl.textContent = 'カードをタップしてね！';
+        }
+    </script>
+</body>
+</html>
