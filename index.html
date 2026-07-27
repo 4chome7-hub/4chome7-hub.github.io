@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ひらがな学習アプリ - にがてこくふくモード</title>
+    <title>けいさんカード</title>
     <style>
         :root {
             --bg-color: #f0f8ff;
             --card-bg: #ffffff;
             --primary-color: #4682b4;
+            --answer-color: #3cb371;
             --accent-color: #ff6347;
-            --hint-color: #3cb371;
             --border-color: #e0e0e0;
-            --master-color: #ffd700;
         }
 
         body {
@@ -23,500 +22,63 @@
             min-height: 100vh;
             margin: 0;
             background-color: var(--bg-color);
-            overflow-x: hidden;
         }
 
         #app {
             text-align: center;
             background-color: var(--card-bg);
-            padding: 1.5rem;
+            padding: 2rem 1.5rem;
             border-radius: 24px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            width: 95%;
-            max-width: 450px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            width: 90%;
+            max-width: 400px;
         }
 
-        .settings-area {
-            width: 100%;
-            background: #f9f9f9;
-            border-radius: 12px;
-            padding: 10px;
-            margin-bottom: 1rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .settings-title {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-
-        .group-selector {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 5px;
-        }
-
-        .group-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 0.8rem;
-            cursor: pointer;
-        }
-
-        .control-btns {
-            margin-top: 8px;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .mini-btn {
-            font-size: 0.7rem;
-            padding: 4px 8px;
-            cursor: pointer;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            background: #fff;
-        }
-
-        .hiragana-display {
-            width: 180px;
-            height: 180px;
-            border: 6px solid var(--primary-color);
-            border-radius: 30px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 1rem;
-            background-color: #fffacd;
-            position: relative;
-        }
-
-        #hiragana-char {
-            font-size: 110px;
-            font-weight: bold;
-            color: var(--primary-color);
-            margin: 0;
-        }
-
-        .info-area {
-            min-height: 260px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            gap: 0.5rem;
-            width: 100%;
-        }
-
-        #timer-text {
-            font-size: 1.2rem;
-            color: #ff8c00;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        /* ヒント領域 */
-        #hint-content {
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 130px;
-        }
-
-        #hint-content.visible {
-            opacity: 1;
-        }
-
-        .emoji-large {
-            display: block;
-            font-size: 4.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        #hint-word {
-            font-size: 1.8rem;
-            color: var(--hint-color);
-            font-weight: bold;
-        }
-
-        #hint-image {
-            max-width: 130px;
-            max-height: 130px;
-            border-radius: 12px;
-            margin-top: 5px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        /* 評価ボタン領域（常に表示） */
-        .feedback-area {
-            display: flex;
-            gap: 20px;
-            margin-top: 10px;
-        }
-
-        .feedback-btn {
-            border: none;
-            border-radius: 50%;
-            width: 65px;
-            height: 65px;
+        h1 {
             font-size: 1.6rem;
-            cursor: pointer;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
-            transition: transform 0.1s, opacity 0.2s;
+            color: var(--primary-color);
+            margin: 0 0 1.5rem;
+        }
+
+        .menu {
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
         }
 
-        .feedback-btn:active {
-            transform: translateY(3px);
-            box-shadow: none;
-        }
-
-        .btn-good { background-color: #e3f2fd; color: #1976d2; border: 2px solid #1976d2; }
-        .btn-bad { background-color: #fff3e0; color: #f57c00; border: 2px solid #f57c00; }
-
-        #next-button {
-            margin-top: 1rem;
-            padding: 12px 24px;
-            font-size: 1.1rem;
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #d44e38;
-        }
-
-        .progress-container {
-            width: 100%;
-            height: 8px;
-            background: #eee;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-            overflow: hidden;
-        }
-
-        #progress-bar {
-            width: 100%;
-            height: 100%;
-            background: var(--accent-color);
-            transition: width 1s linear;
-        }
-
-        #error-msg {
-            color: red;
-            font-size: 0.8rem;
-            display: none;
-        }
-
-        /* ほかのアプリへのリンク */
-        .other-apps {
-            width: 100%;
-            margin-top: 1.2rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .other-apps-title {
-            font-size: 0.8rem;
-            color: #666;
-            margin-bottom: 8px;
-        }
-
-        .other-apps-links {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .other-apps-links a {
-            flex: 1;
-            max-width: 140px;
-            padding: 10px 0;
-            font-size: 1rem;
+        .menu a {
+            display: block;
+            padding: 1.2rem;
+            font-size: 1.5rem;
             font-weight: bold;
             text-decoration: none;
             color: white;
-            background-color: var(--hint-color);
-            border-radius: 50px;
-            box-shadow: 0 4px 0 #2e8b57;
+            border-radius: 16px;
         }
 
-        .other-apps-links a:active {
-            transform: translateY(3px);
+        .menu a.add {
+            background-color: var(--answer-color);
+            box-shadow: 0 5px 0 #2e8b57;
+        }
+
+        .menu a.sub {
+            background-color: var(--accent-color);
+            box-shadow: 0 5px 0 #d44e38;
+        }
+
+        .menu a:active {
+            transform: translateY(4px);
             box-shadow: none;
         }
     </style>
 </head>
 <body>
     <div id="app">
-        <div class="settings-area">
-            <div class="settings-title">練習する「行（ぎょう）」をえらぼう</div>
-            <div class="group-selector" id="group-selector"></div>
-            <div class="control-btns">
-                <button class="mini-btn" onclick="selectAll(true)">ぜんぶ</button>
-                <button class="mini-btn" onclick="selectAll(false)">リセット</button>
-            </div>
-        </div>
-
-        <div id="error-msg">練習するものを1つ以上選んでね！</div>
-
-        <div class="progress-container">
-            <div id="progress-bar"></div>
-        </div>
-
-        <div class="hiragana-display">
-            <p id="hiragana-char">...</p>
-        </div>
-
-        <div class="info-area">
-            <div id="timer-text"></div>
-            
-            <!-- ヒントは後から表示 -->
-            <div id="hint-content">
-                <div id="hint-media"></div>
-                <div id="hint-word"></div>
-            </div>
-
-            <!-- 評価ボタンは問題と同時に表示 -->
-            <div class="feedback-area">
-                <button class="feedback-btn btn-good" onclick="handleFeedback(-1)" title="わかった！">👍</button>
-                <button class="feedback-btn btn-bad" onclick="handleFeedback(2)" title="むずかしい">🤔</button>
-            </div>
-        </div>
-
-        <button id="next-button" onclick="startNewRound()">つぎへ</button>
-
-        <div class="other-apps">
-            <div class="other-apps-title">けいさんカード</div>
-            <div class="other-apps-links">
-                <a href="addcards.html">たしざん</a>
-                <a href="subcards.html">ひきざん</a>
-            </div>
+        <h1>けいさんカード</h1>
+        <div class="menu">
+            <a class="add" href="addcards.html">たしざん</a>
+            <a class="sub" href="subcards.html">ひきざん</a>
         </div>
     </div>
-
-    <script>
-        const hiraganaData = [
-            { char: 'あ', word: 'アリ', emoji: '🐜', group: 'あ行' },
-            { char: 'い', word: 'イヌ', emoji: '🐕', group: 'あ行' },
-            { char: 'う', word: 'ウシ', emoji: '🐄', group: 'あ行' },
-            { char: 'え', word: 'エビ', emoji: '🍤', group: 'あ行' },
-            { char: 'お', word: 'オニ', emoji: '👹', group: 'あ行' },
-            { char: 'か', word: 'カメ', emoji: '🐢', group: 'か行' },
-            { char: 'き', word: 'キリン', emoji: '🦒', group: 'か行' },
-            { char: 'く', word: 'クマ', emoji: '🐻', group: 'か行' },
-            { char: 'け', word: 'ケーキ', emoji: '🍰', group: 'か行' },
-            { char: 'こ', word: 'コアラ', emoji: '🐨', group: 'か行' },
-            { char: 'さ', word: 'サル', emoji: '🐒', group: 'さ行' },
-            { char: 'し', word: 'シカ', emoji: '🦌', group: 'さ行' },
-            { char: 'す', word: 'スズメ', emoji: '🐦', group: 'さ行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEigFrGTrd_XfJZ4QgZqFdN_V2ycWLgU2BSSvSZk4rgGBK1cP5mm-6GK1XIOZUZ-uy6PBrg6QGAM-Fi7aK13A-t1E1_AbD3a0AOQUT5J6qaP14-7dFVqa_Fbit0k7E97nObf1id_CPtfJVM/s400/bird_suzume.png' },
-            { char: 'せ', word: 'セミ', emoji: '🦗', group: 'さ行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgpamKqt1yh0GF0fQxiqCp3oWkvCjgS8I55cOnQ9I4ARPlaoV5hmaJxE1AaKS04rWpNCjFAAJQbQcaFhQ4Vr_4i4bkIzYuxoE3qCIKGuBkTp3v3it03S32a4f4jUZLGXOK6gs45XuEDh0ge/s400/mushi_aburazemi.png' },
-            { char: 'そ', word: 'そり', emoji: '🛷', group: 'さ行' },
-            { char: 'た', word: 'タコ', emoji: '🐙', group: 'た行' },
-            { char: 'ち', word: 'チーズ', emoji: '🧀', group: 'た行' },
-            { char: 'つ', word: 'ツル', emoji: '🦢', group: 'た行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgZp-s1fldW8Ygusv-c5awbWYBWP0swzsOMCAnhCUYCNdiEO7W3VSLadHSsXwWX0ZZlmMcZLe2S8Hzs_3MTduKeghKCFPko0p2sJ31b220ItWGgXylvfX832lfCcCTvfO6LcxKzhghAVic/s400/animal_tsuru.png' },
-            { char: 'て', word: 'テントウムシ', emoji: '🐞', group: 'た行' },
-            { char: 'と', word: 'トラ', emoji: '🐅', group: 'た行' },
-            { char: 'な', word: 'ナマケモノ', emoji: '🦥', group: 'な行' },
-            { char: 'に', word: 'ニワトリ', emoji: '🐔', group: 'な行' },
-            { char: 'ぬ', word: 'ヌイぐるミ', emoji: '🧸', group: 'な行' },
-            { char: 'ね', word: 'ネコ', emoji: '🐈', group: 'な行' },
-            { char: 'の', word: 'ノコギリ', emoji: '⚙️', group: 'な行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiDURGIYCfcff4uzsYY_nLUvINeZ8xI6zEBvMLqwO39XElSmXiYrAkYE7cmdNr5GzbsnU929rDjJdg0IfAnl6AinLc7yo0YN2VlZ5tlg2TS_Idhlc8L9LJrW50_-R2WdIs85Wd6r_HlHFs/s400/nokogiri.png' },
-            { char: 'は', word: 'ハチ', emoji: '🐝', group: 'は行' },
-            { char: 'ひ', word: 'ヒツジ', emoji: '🐑', group: 'は行' },
-            { char: 'ふ', word: 'フクロウ', emoji: '🦉', group: 'は行' },
-            { char: 'へ', word: 'ヘビ', emoji: '🐍', group: 'は行' },
-            { char: 'ほ', word: 'ホタル', emoji: '✨', group: 'は行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi7b1eStvk2uQpi6emv_SK2YL2Kmy8EJHduWrKSJ1w3RjW1k4IRZrchQo3m6WHYwEoH3Pq8fglmla7sLJDXiO_61qzUJ1FFBO3ayqrGH4L662t-s36VmS7mzOAwHzCGISI5oJKAlOrHgVA/s400/bug_hotaru.png' },
-            { char: 'ば', word: 'バナナ', emoji: '🍌', group: 'ば行' },
-            { char: 'び', word: 'ビスケット', emoji: '🍪', group: 'ば行' },
-            { char: 'ぶ', word: 'ブタ', emoji: '🐷', group: 'ば行' },
-            { char: 'べ', word: 'ベロ', emoji: '👅', group: 'ば行' },
-            { char: 'ぼ', word: 'ボール', emoji: '⚽', group: 'ば行' },
-            { char: 'ぱ', word: 'パンダ', emoji: '🐼', group: 'ぱ行' },
-            { char: 'ぴ', word: 'ピザ', emoji: '🍕', group: 'ぱ行' },
-            { char: 'ぷ', word: 'プリン', emoji: '🍮', group: 'ぱ行' },
-            { char: 'ぺ', word: 'ペンギン', emoji: '🐧', group: 'ぱ行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh5eDyuXj0Hi34W3PjsBpjSC-5S1Jy_BFhxl1eb9gIfN9ST__ngCrt4dFGjiOEddSSA5KgaQb_G4Yx4ag1XqYVb5bfUd0Tvg9AXScs6JGEnWvhHgaFTED6Wed6NCC0A-KRAdJ_pnOvA2K6M/s400/penguin01_king.png' },
-            { char: 'ぽ', word: 'ポスト', emoji: '📮', group: 'ぱ行' },
-            { char: 'ま', word: 'マメ', emoji: '🫘', group: 'ま行' },
-            { char: 'み', word: 'ミミズ', emoji: '🪱', group: 'ま行' },
-            { char: 'む', word: 'ムカデ', emoji: '🐛', group: 'ま行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjwEkr_yVnXcFxd890UhidxZ3bRpyon85uEU3nsNkAX6UpDjbCCns4XrJjfnLfv-xq-rpY7ufOlA9CsBsgdG4mctrRvX2GxKOMWHyUo-mzyVTcS1d_LUSBxO_6C-edlxyyt8NIj4rMQjSDp/s400/bug_mukade.png' },
-            { char: 'め', word: 'めがね', emoji: '👓', group: 'ま行' },
-            { char: 'も', word: 'モグラ', emoji: '🕳️', group: 'ま行' },
-            { char: 'や', word: 'ヤギ', emoji: '🐐', group: 'や行' },
-            { char: 'ゆ', word: 'ユキダルマ', emoji: '⛄', group: 'や行' },
-            { char: 'よ', word: 'ヨット', emoji: '⛵', group: 'や行' },
-            { char: 'ら', word: 'ライオン', emoji: '🦁', group: 'ら行' },
-            { char: 'り', word: 'リス', emoji: '🐿️', group: 'ら行' },
-            { char: 'る', word: 'ルーレット', emoji: '🎡', group: 'ら行', imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjhQtJUOa-zX5TJXZe43lICa_jPcT4siaA6jmjc-JG8pNbE8YS8P8C5Tp21FTko-XUbRmJ9fbzm9BBUeu9xORBF8tPseV-Z7cM-j36iB6b4IXIEPBqCd7jA9dSs9BGOEgfV035RRuB4wcE/s400/roulette.png' },
-            { char: 'れ', word: 'れもん', emoji: '🍋', group: 'ら行' },
-            { char: 'ろ', word: 'ロウソク', emoji: '🕯️', group: 'ら行' },
-            { char: 'わ', word: 'ワニ', emoji: '🐊', group: 'わ行' },
-            { char: 'を', word: '（を）', emoji: '⚓', group: 'わ行' },
-            { char: 'ん', word: '（ん）', emoji: '🔔', group: 'わ行' },
-            { char: 'が', word: 'ガム', emoji: '🍬', group: 'が行' },
-            { char: 'ぎ', word: 'ギター', emoji: '🎸', group: 'が行' },
-            { char: 'ぐ', word: 'グレープ', emoji: '🍇', group: 'が行' },
-            { char: 'げ', word: 'ゲーム', emoji: '🎮', group: 'が行' },
-            { char: 'ご', word: 'ゴリラ', emoji: '🦍', group: 'が行' },
-            { char: 'ざ', word: 'ザリガニ', emoji: '🦐', group: 'ざ行' },
-            { char: 'じ', word: 'じてんしゃ', emoji: '🚲', group: 'ざ行' },
-            { char: 'ず', word: 'ずかん', emoji: '📖', group: 'ざ行' },
-            { char: 'ぜ', word: 'ゼリー', emoji: '🍮', group: 'ざ行' },
-            { char: 'ぞ', word: 'ぞう', emoji: '🐘', group: 'ざ行' },
-            { char: 'だ', word: 'だるま', emoji: '🎎', group: 'だ行' },
-            { char: 'ぢ', word: '（ぢ）', emoji: '🌀', group: 'だ行' },
-            { char: 'づ', word: '（づ）', emoji: '💧', group: 'だ行' },
-            { char: 'で', word: 'でんしゃ', emoji: '🚃', group: 'だ行' },
-            { char: 'ど', word: 'ドーナツ', emoji: '🍩', group: 'だ行' }
-        ];
-
-        const groups = ['あ行', 'か行', 'が行', 'さ行', 'ざ行', 'た行', 'だ行', 'な行', 'は行', 'ば行', 'ぱ行', 'ま行', 'や行', 'ら行', 'わ行'];
-        const groupMapping = { a: 'あ行', k: 'か行', g: 'が行', s: 'さ行', z: 'ざ行', t: 'た行', d: 'だ行', n: 'な行', h: 'は行', b: 'ば行', p: 'ぱ行', m: 'ま行', y: 'や行', r: 'ら行', w: 'わ行' };
-
-        const masteryWeights = {};
-        hiraganaData.forEach(d => { masteryWeights[d.char] = 5; });
-
-        const hiraganaCharEl = document.getElementById('hiragana-char');
-        const hintContentEl = document.getElementById('hint-content');
-        const hintMediaEl = document.getElementById('hint-media');
-        const hintWordEl = document.getElementById('hint-word');
-        const timerTextEl = document.getElementById('timer-text');
-        const progressBar = document.getElementById('progress-bar');
-        const groupSelectorEl = document.getElementById('group-selector');
-        const errorMsgEl = document.getElementById('error-msg');
-
-        let currentData = null;
-        let hintTimeout = null;
-        let autoNextTimeout = null;
-        let timerInterval = null;
-        let selectedGroups = ['あ行'];
-
-        function parseUrlParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const gParam = urlParams.get('g');
-            if (gParam) {
-                const keys = gParam.split(',');
-                const mapped = keys.map(k => groupMapping[k.trim().toLowerCase()]).filter(v => v);
-                if (mapped.length > 0) selectedGroups = mapped;
-            }
-        }
-
-        function initSelector() {
-            groupSelectorEl.innerHTML = groups.map(g => `
-                <label class="group-item">
-                    <input type="checkbox" value="${g}" ${selectedGroups.includes(g) ? 'checked' : ''} onchange="updateGroups()">
-                    ${g.replace('行', '')}
-                </label>
-            `).join('');
-        }
-
-        function updateGroups() {
-            const checkboxes = groupSelectorEl.querySelectorAll('input:checked');
-            selectedGroups = Array.from(checkboxes).map(cb => cb.value);
-            if (selectedGroups.length === 0) {
-                errorMsgEl.style.display = 'block';
-            } else {
-                errorMsgEl.style.display = 'none';
-                startNewRound();
-            }
-        }
-
-        function selectAll(bool) {
-            groupSelectorEl.querySelectorAll('input').forEach(cb => cb.checked = bool);
-            updateGroups();
-        }
-
-        function handleFeedback(adjustment) {
-            if (!currentData) return;
-            masteryWeights[currentData.char] = Math.max(1, Math.min(15, masteryWeights[currentData.char] + adjustment));
-            
-            const el = document.querySelector(adjustment > 0 ? '.btn-bad' : '.btn-good');
-            el.style.transform = 'scale(1.2)';
-            setTimeout(() => { 
-                el.style.transform = 'scale(1)';
-                startNewRound(); // 評価したら即座に次の問題へ
-            }, 150);
-        }
-
-        function getWeightedRandom(dataList) {
-            const totalWeight = dataList.reduce((sum, item) => sum + masteryWeights[item.char], 0);
-            let random = Math.random() * totalWeight;
-            for (const item of dataList) {
-                if (random < masteryWeights[item.char]) return item;
-                random -= masteryWeights[item.char];
-            }
-            return dataList[0];
-        }
-
-        function startNewRound() {
-            clearTimeout(hintTimeout);
-            clearTimeout(autoNextTimeout);
-            clearInterval(timerInterval);
-
-            if (selectedGroups.length === 0) return;
-
-            hintContentEl.classList.remove('visible');
-            hintMediaEl.innerHTML = '';
-            hintWordEl.textContent = '';
-            
-            const filteredData = hiraganaData.filter(d => selectedGroups.includes(d.group));
-            currentData = getWeightedRandom(filteredData);
-            
-            hiraganaCharEl.textContent = currentData.char;
-
-            let seconds = 5;
-            timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
-            progressBar.style.transition = 'none';
-            progressBar.style.width = '100%';
-            
-            setTimeout(() => {
-                progressBar.style.transition = 'width 5s linear';
-                progressBar.style.width = '0%';
-            }, 50);
-
-            timerInterval = setInterval(() => {
-                seconds--;
-                if (seconds > 0) {
-                    timerTextEl.textContent = `ヒントまで ${seconds}びょう`;
-                } else {
-                    clearInterval(timerInterval);
-                    timerTextEl.textContent = 'こたえ！';
-                }
-            }, 1000);
-
-            hintTimeout = setTimeout(() => {
-                if (currentData.imageUrl) {
-                    hintMediaEl.innerHTML = `<img id="hint-image" src="${currentData.imageUrl}" alt="hint">`;
-                    hintWordEl.textContent = currentData.word;
-                } else {
-                    hintMediaEl.innerHTML = `<span class="emoji-large">${currentData.emoji}</span>`;
-                    hintWordEl.textContent = currentData.word;
-                }
-                
-                hintContentEl.classList.add('visible');
-
-                autoNextTimeout = setTimeout(() => {
-                    startNewRound();
-                }, 5000);
-            }, 5000);
-        }
-
-        window.onload = () => {
-            parseUrlParams();
-            initSelector();
-            startNewRound();
-        };
-    </script>
 </body>
 </html>
