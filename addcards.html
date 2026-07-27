@@ -253,6 +253,38 @@
         const hintTextEl = document.getElementById('hint-text');
         const solvedCountEl = document.getElementById('solved-count');
 
+        // ------- 回答数の保存（localStorage・日付が変わったらリセット）-------
+        // 保存形式: { date: "2026-7-27", add: 3, sub: 5 }（たしざん・ひきざんで共有）
+        const STORE_KEY = 'keisanCardCounts';
+        const COUNT_FIELD = 'add';   // このページは たしざん（ひきざんは 'sub'）
+
+        function todayStr() {
+            const d = new Date();
+            return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+        }
+        function saveStore(data) {
+            try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e) {}
+        }
+        function loadStore() {
+            let data = null;
+            try { data = JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) {}
+            if (!data || data.date !== todayStr()) {
+                // 日付が変わった（または未保存）→ 0 にリセット
+                data = { date: todayStr(), add: 0, sub: 0 };
+                saveStore(data);
+            }
+            return data;
+        }
+        function refreshCount() {
+            store = loadStore();
+            solvedCount = store[COUNT_FIELD] || 0;
+            solvedCountEl.textContent = solvedCount;
+        }
+
+        let store = loadStore();
+        solvedCount = store[COUNT_FIELD] || 0;   // 保存済みの今日の回答数を復元
+        solvedCountEl.textContent = solvedCount;
+
         function drawNext() {
             if (deckIndex >= deck.length) {
                 // 一巡したら再シャッフル
@@ -289,7 +321,11 @@
             if (!showingAnswer) {
                 // 問題 → 答えを表示（1問こなした）
                 showAnswer();
-                solvedCount++;
+                // 回答数を +1 して保存（日付が変わっていれば 0 からカウント）
+                store = loadStore();
+                solvedCount = (store[COUNT_FIELD] || 0) + 1;
+                store[COUNT_FIELD] = solvedCount;
+                saveStore(store);
                 solvedCountEl.textContent = solvedCount;
             } else {
                 // 答え → 次の問題へ
@@ -316,11 +352,12 @@
             current = null;
             showingAnswer = false;
             started = false;
-            solvedCount = 0;
-            solvedCountEl.textContent = '0';
             cardTextEl.classList.remove('answered');
             cardTextEl.textContent = 'スタート';
             hintTextEl.textContent = 'カードをタップしてね！';
+            // といた かず は1日の合計なので、リセットボタンでは消さない
+            // （日付が変わると自動で 0 にリセットされる）
+            refreshCount();
         }
     </script>
 </body>
