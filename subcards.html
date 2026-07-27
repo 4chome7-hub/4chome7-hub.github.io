@@ -39,6 +39,13 @@
             align-items: center;
         }
 
+        .col-left, .col-right {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
         h1 {
             font-size: 1.4rem;
             color: var(--primary-color);
@@ -75,26 +82,20 @@
             line-height: 1.1;
         }
 
-        /* カード本体 */
+        /* カード本体（問題表示） */
         .flash-card {
             width: 100%;
-            min-height: 200px;
+            min-height: 180px;
             border: 6px solid var(--primary-color);
             border-radius: 30px;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
             background-color: #fffacd;
-            cursor: pointer;
             user-select: none;
-            transition: transform 0.08s;
             box-sizing: border-box;
             padding: 1rem;
-        }
-
-        .flash-card:active {
-            transform: scale(0.98);
         }
 
         #card-text {
@@ -109,10 +110,63 @@
         }
 
         .hint-text {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: #999;
-            min-height: 1.2rem;
+            min-height: 1.3rem;
+            margin-bottom: 0.8rem;
+        }
+
+        /* 回答選択肢ボタン（0〜10） */
+        .answer-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
             margin-bottom: 1rem;
+        }
+
+        .answer-btn {
+            width: 52px;
+            height: 52px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 2px solid var(--primary-color);
+            background: #fff;
+            color: var(--primary-color);
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 3px 0 rgba(70, 130, 180, 0.4);
+            padding: 0;
+        }
+
+        .answer-btn:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+
+        .answer-btn.correct {
+            background: var(--answer-color);
+            color: #fff;
+            border-color: var(--answer-color);
+        }
+
+        .answer-btn.wrong {
+            background: var(--accent-color);
+            color: #fff;
+            border-color: var(--accent-color);
+            animation: shake 0.3s;
+        }
+
+        .answer-btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
         }
 
         .btn-row {
@@ -143,7 +197,7 @@
             box-shadow: 0 4px 0 #607d8b;
         }
 
-        button:active {
+        #next-button:active, #reset-button:active {
             transform: translateY(3px);
             box-shadow: none;
         }
@@ -155,7 +209,7 @@
         }
 
         /* ===== スマホ横画面（landscape）最適化 ===== */
-        /* 「といた かず」を左、問題カードを右に並べる */
+        /* 「せいかい かず」を左、問題カード＋回答ボタンを右に並べる */
         @media (orientation: landscape) and (max-height: 600px) {
             html, body { height: 100%; }
             body { align-items: stretch; }
@@ -172,26 +226,29 @@
                 column-gap: 18px;
                 row-gap: 4px;
                 align-content: center;
-                grid-template-columns: minmax(110px, 0.8fr) 1.7fr;
-                grid-template-rows: auto auto 1fr auto;
+                grid-template-columns: minmax(120px, 0.8fr) 1.8fr;
+                grid-template-rows: 1fr auto auto;
                 grid-template-areas:
-                    "title   card"
-                    "count   card"
-                    "buttons card"
-                    "home    hint";
+                    "left  right"
+                    "nav   right"
+                    "home  right";
             }
 
-            #app > h1          { grid-area: title;   margin: 0; font-size: 1.1rem; }
-            #app > .count-area { grid-area: count;   margin: 0; padding: 6px 0; }
-            #app > .flash-card { grid-area: card;    margin: 0; min-height: 0; height: 100%; }
-            #app > .hint-text  { grid-area: hint;    margin: 0; align-self: center; }
-            #app > .btn-row    { grid-area: buttons; align-self: center; flex-wrap: wrap; }
-            #app > .home-link  { grid-area: home;    margin: 0; align-self: center; }
+            #app > .col-left  { grid-area: left; justify-content: center; }
+            #app > .col-right { grid-area: right; height: 100%; justify-content: center; }
+            #app > .btn-row   { grid-area: nav; align-self: center; flex-wrap: wrap; }
+            #app > .home-link { grid-area: home; margin: 0; align-self: center; }
 
+            .col-left h1 { font-size: 1.1rem; }
+            .count-area { margin: 0; padding: 6px 0; }
             .count-label { font-size: 0.75rem; }
             .count-value { font-size: 1.5rem; }
-            #card-text   { font-size: 4.2rem; }
 
+            .flash-card { min-height: 0; flex: 1; margin-bottom: 0.4rem; }
+            #card-text { font-size: 3.6rem; }
+            .hint-text { min-height: 1.1rem; margin-bottom: 0.4rem; }
+            .answer-btn { width: 44px; height: 44px; font-size: 1.2rem; }
+            .answer-buttons { gap: 6px; margin-bottom: 0; }
             .btn-row button { padding: 8px 14px; font-size: 0.9rem; }
             #next-button { max-width: none; }
         }
@@ -199,20 +256,23 @@
 </head>
 <body>
     <div id="app">
-        <h1>ひきざんカード</h1>
-
-        <div class="count-area">
-            <div class="count-box">
-                <span class="count-label">といた かず</span>
-                <span class="count-value" id="solved-count">0</span>
+        <div class="col-left">
+            <h1>ひきざんカード</h1>
+            <div class="count-area">
+                <div class="count-box">
+                    <span class="count-label">せいかい かず</span>
+                    <span class="count-value" id="solved-count">0</span>
+                </div>
             </div>
         </div>
 
-        <div class="flash-card" id="flash-card" onclick="onCardTap()">
-            <p id="card-text">スタート</p>
+        <div class="col-right">
+            <div class="flash-card" id="flash-card">
+                <p id="card-text">…</p>
+            </div>
+            <div class="hint-text" id="hint-text">こたえのボタンをおしてね！</div>
+            <div class="answer-buttons" id="answer-buttons"></div>
         </div>
-
-        <div class="hint-text" id="hint-text">カードをタップしてね！</div>
 
         <div class="btn-row">
             <button id="next-button" onclick="nextProblem(event)">つぎの もんだい</button>
@@ -240,19 +300,24 @@
             return deck;
         }
 
+        // 答えの範囲（回答ボタンの数字）
+        const ANSWER_MIN = 0;
+        const ANSWER_MAX = 10;
+
         // ------- 状態 -------
         let deck = buildDeck();
         let deckIndex = 0;
         let current = null;      // { a, b }
-        let showingAnswer = false;
-        let started = false;
-        let solvedCount = 0;     // 答えを見た（＝1問こなした）回数
+        let answered = false;    // 現在の問題に正解済みか
+        let advanceTimer = null; // 正解後に次へ進むタイマー
+        let solvedCount = 0;     // 正解した回数
 
         const cardTextEl = document.getElementById('card-text');
         const hintTextEl = document.getElementById('hint-text');
         const solvedCountEl = document.getElementById('solved-count');
+        const answerButtonsEl = document.getElementById('answer-buttons');
 
-        // ------- 回答数の保存（localStorage・日付が変わったらリセット）-------
+        // ------- 正解数の保存（localStorage・日付が変わったらリセット）-------
         // 保存形式: { date: "2026-7-27", add: 3, sub: 5 }（たしざん・ひきざんで共有）
         const STORE_KEY = 'keisanCardCounts';
         const COUNT_FIELD = 'sub';   // このページは ひきざん（たしざんは 'add'）
@@ -281,8 +346,20 @@
         }
 
         let store = loadStore();
-        solvedCount = store[COUNT_FIELD] || 0;   // 保存済みの今日の回答数を復元
+        solvedCount = store[COUNT_FIELD] || 0;   // 保存済みの今日の正解数を復元
         solvedCountEl.textContent = solvedCount;
+
+        // ------- 回答ボタン（0〜10）を作る -------
+        function buildAnswerButtons() {
+            answerButtonsEl.innerHTML = '';
+            for (let n = ANSWER_MIN; n <= ANSWER_MAX; n++) {
+                const btn = document.createElement('button');
+                btn.className = 'answer-btn';
+                btn.textContent = n;
+                btn.addEventListener('click', () => checkAnswer(n, btn));
+                answerButtonsEl.appendChild(btn);
+            }
+        }
 
         function drawNext() {
             if (deckIndex >= deck.length) {
@@ -294,70 +371,75 @@
         }
 
         function showProblem() {
-            showingAnswer = false;
+            answered = false;
             cardTextEl.classList.remove('answered');
             cardTextEl.textContent = `${current.a} − ${current.b} =`;
-            hintTextEl.textContent = 'こたえを かんがえて、タップ！';
+            hintTextEl.textContent = 'こたえのボタンをおしてね！';
+            // ボタンの見た目・有効状態をリセット
+            Array.from(answerButtonsEl.children).forEach(b => {
+                b.classList.remove('correct', 'wrong');
+                b.disabled = false;
+            });
         }
 
-        function showAnswer() {
-            showingAnswer = true;
-            cardTextEl.classList.add('answered');
-            cardTextEl.textContent = `${current.a} − ${current.b} = ${current.a - current.b}`;
-            hintTextEl.textContent = 'つぎは カードか「つぎの もんだい」をタップ';
-        }
+        function checkAnswer(n, btn) {
+            if (answered) return;   // すでに正解済みなら無視
+            const correct = current.a - current.b;
 
-        // カードをタップしたとき
-        function onCardTap() {
-            if (!started) {
-                // 最初のタップでスタート
-                started = true;
-                drawNext();
-                showProblem();
-                return;
-            }
+            if (n === correct) {
+                // 正解 → 答えを表示してカウントアップ
+                answered = true;
+                cardTextEl.classList.add('answered');
+                cardTextEl.textContent = `${current.a} − ${current.b} = ${correct}`;
+                hintTextEl.textContent = 'せいかい！🎉';
+                btn.classList.add('correct');
+                Array.from(answerButtonsEl.children).forEach(b => b.disabled = true);
 
-            if (!showingAnswer) {
-                // 問題 → 答えを表示（1問こなした）
-                showAnswer();
-                // 回答数を +1 して保存（日付が変わっていれば 0 からカウント）
+                // 正解のときだけ +1 して保存（日付が変わっていれば 0 からカウント）
                 store = loadStore();
                 solvedCount = (store[COUNT_FIELD] || 0) + 1;
                 store[COUNT_FIELD] = solvedCount;
                 saveStore(store);
                 solvedCountEl.textContent = solvedCount;
+
+                // 少し待ってから次の問題へ
+                clearTimeout(advanceTimer);
+                advanceTimer = setTimeout(() => {
+                    drawNext();
+                    showProblem();
+                }, 1200);
             } else {
-                // 答え → 次の問題へ
-                drawNext();
-                showProblem();
+                // 不正解 → カウントせず、もう一度
+                hintTextEl.textContent = 'ちがうよ、もういちど！';
+                btn.classList.add('wrong');
+                setTimeout(() => btn.classList.remove('wrong'), 500);
             }
         }
 
-        // 「つぎの もんだい」ボタン
+        // 「つぎの もんだい」ボタン（正解しなくても次へ・カウントしない）
         function nextProblem(e) {
             e.stopPropagation();
-            if (!started) {
-                started = true;
-            }
+            clearTimeout(advanceTimer);
             drawNext();
             showProblem();
         }
 
-        // 「リセット」ボタン
+        // 「リセット」ボタン（問題をシャッフルし直す・せいかい かず は消さない）
         function resetAll(e) {
             e.stopPropagation();
+            clearTimeout(advanceTimer);
             deck = buildDeck();
             deckIndex = 0;
-            current = null;
-            showingAnswer = false;
-            started = false;
-            cardTextEl.classList.remove('answered');
-            cardTextEl.textContent = 'スタート';
-            hintTextEl.textContent = 'カードをタップしてね！';
-            // といた かず は1日の合計なので、リセットボタンでは消さない
-            // （日付が変わると自動で 0 にリセットされる）
+            drawNext();
+            showProblem();
+            // せいかい かず は1日の合計なので消さない（日付が変わると自動リセット）
             refreshCount();
         }
+
+        // ------- 初期化 -------
+        buildAnswerButtons();
+        drawNext();
+        showProblem();
     </script>
 </body>
 </html>
