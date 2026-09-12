@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>きろく - けいさんカード</title>
+    <style>
+        :root {
+            --bg-color: #f0f8ff;
+            --card-bg: #ffffff;
+            --primary-color: #4682b4;
+            --answer-color: #3cb371;
+            --accent-color: #ff6347;
+            --count-color: #ff8c00;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+            padding: 1.2rem 0;
+            box-sizing: border-box;
+        }
+
+        #app {
+            text-align: center;
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 92%;
+            max-width: 520px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin: 0 0 1rem;
+        }
+
+        /* きょうのまとめ */
+        .today {
+            background: #fff7e6;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .today-title {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 0.6rem;
+        }
+
+        .today-nums {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .num-box { display: flex; flex-direction: column; align-items: center; }
+        .num-label { font-size: 0.8rem; color: #666; }
+        .num-value { font-size: 2rem; font-weight: bold; line-height: 1.1; }
+        .num-value.total { color: var(--count-color); }
+        .num-value.correct { color: var(--answer-color); }
+        .num-value.wrong { color: var(--accent-color); }
+
+        /* 履歴テーブル */
+        .history-title {
+            font-size: 0.95rem;
+            color: #666;
+            text-align: left;
+            margin: 0 0 0.5rem;
+        }
+
+        .table-wrap { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            padding: 8px 6px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        th {
+            color: #666;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        td.date { text-align: left; font-weight: bold; color: var(--primary-color); }
+        td.c-total { color: var(--count-color); font-weight: bold; }
+        td.c-correct { color: var(--answer-color); font-weight: bold; }
+        td.c-wrong { color: var(--accent-color); font-weight: bold; }
+
+        .breakdown { font-size: 0.72rem; color: #999; }
+
+        .empty { color: #999; padding: 1.5rem 0; }
+
+        .home-link {
+            display: inline-block;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>きろく</h1>
+
+        <div class="today">
+            <div class="today-title" id="today-title">きょう</div>
+            <div class="today-nums">
+                <div class="num-box">
+                    <span class="num-label">かいとうすう</span>
+                    <span class="num-value total" id="today-total">0</span>
+                </div>
+                <div class="num-box">
+                    <span class="num-label">せいかいすう</span>
+                    <span class="num-value correct" id="today-correct">0</span>
+                </div>
+                <div class="num-box">
+                    <span class="num-label">ふせいかいすう</span>
+                    <span class="num-value wrong" id="today-wrong">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-title">これまでのきろく</div>
+        <div class="table-wrap">
+            <table id="history-table">
+                <thead>
+                    <tr>
+                        <th>ひづけ</th>
+                        <th>かいとうすう</th>
+                        <th>せいかいすう</th>
+                        <th>ふせいかいすう</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body"></tbody>
+            </table>
+        </div>
+        <div class="empty" id="empty-msg" style="display:none;">まだ きろくが ありません</div>
+
+        <a class="home-link" href="index.html">← ホームへ</a>
+    </div>
+
+    <script>
+        const STATS_KEY = 'keisanCardStats';
+
+        function todayStr() {
+            const d = new Date();
+            return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+        }
+        function loadStats() {
+            try { return JSON.parse(localStorage.getItem(STATS_KEY)) || {}; } catch (e) { return {}; }
+        }
+
+        // 1日分のエントリを {correct, wrong} ごとに安全に取り出す
+        function opData(entry, op) {
+            const d = entry && entry[op];
+            return { correct: (d && d.correct) || 0, wrong: (d && d.wrong) || 0 };
+        }
+        // 1日分の合計 { total, correct, wrong, add, sub }
+        function dayTotals(entry) {
+            const add = opData(entry, 'add');
+            const sub = opData(entry, 'sub');
+            const correct = add.correct + sub.correct;
+            const wrong = add.wrong + sub.wrong;
+            return { total: correct + wrong, correct, wrong, add, sub };
+        }
+        // "2026-7-28" → 比較用の数値 20260728
+        function dateKeyNum(s) {
+            const p = s.split('-').map(Number);
+            return p[0] * 10000 + p[1] * 100 + p[2];
+        }
+        function formatDate(s) {
+            const p = s.split('-').map(Number);
+            return p[1] + 'がつ' + p[2] + 'にち';
+        }
+
+        function render() {
+            const stats = loadStats();
+            const dates = Object.keys(stats).sort((a, b) => dateKeyNum(b) - dateKeyNum(a));
+
+            // きょうのまとめ
+            const t = dayTotals(stats[todayStr()]);
+            document.getElementById('today-total').textContent = t.total;
+            document.getElementById('today-correct').textContent = t.correct;
+            document.getElementById('today-wrong').textContent = t.wrong;
+
+            // 履歴テーブル
+            const body = document.getElementById('history-body');
+            body.innerHTML = '';
+            if (dates.length === 0) {
+                document.getElementById('empty-msg').style.display = 'block';
+                document.getElementById('history-table').style.display = 'none';
+                return;
+            }
+            dates.forEach(date => {
+                const d = dayTotals(stats[date]);
+                const tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td class="date">' + formatDate(date) +
+                        '<div class="breakdown">た ' + d.add.correct + '/' + (d.add.correct + d.add.wrong) +
+                        '　ひ ' + d.sub.correct + '/' + (d.sub.correct + d.sub.wrong) + '</div></td>' +
+                    '<td class="c-total">' + d.total + '</td>' +
+                    '<td class="c-correct">' + d.correct + '</td>' +
+                    '<td class="c-wrong">' + d.wrong + '</td>';
+                body.appendChild(tr);
+            });
+        }
+
+        render();
+    </script>
+</body>
+</html>

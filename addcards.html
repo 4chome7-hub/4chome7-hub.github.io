@@ -318,36 +318,44 @@
         const solvedCountEl = document.getElementById('solved-count');
         const answerButtonsEl = document.getElementById('answer-buttons');
 
-        // ------- 正解数の保存（localStorage・日付が変わったらリセット）-------
-        // 保存形式: { date: "2026-7-27", add: 3, sub: 5 }（たしざん・ひきざんで共有）
-        const STORE_KEY = 'keisanCardCounts';
-        const COUNT_FIELD = 'add';   // このページは たしざん（ひきざんは 'sub'）
+        // ------- 記録の保存（localStorage・日付ごとに集計）-------
+        // 保存形式:
+        // { "2026-7-28": { add:{correct,wrong}, sub:{correct,wrong} }, ... }
+        const STATS_KEY = 'keisanCardStats';
+        const OP = 'add';   // このページは たしざん（ひきざんは 'sub'）
 
         function todayStr() {
             const d = new Date();
             return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
         }
-        function saveStore(data) {
-            try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e) {}
+        function loadStats() {
+            try { return JSON.parse(localStorage.getItem(STATS_KEY)) || {}; } catch (e) { return {}; }
         }
-        function loadStore() {
-            let data = null;
-            try { data = JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) {}
-            if (!data || data.date !== todayStr()) {
-                // 日付が変わった（または未保存）→ 0 にリセット
-                data = { date: todayStr(), add: 0, sub: 0 };
-                saveStore(data);
-            }
-            return data;
+        function saveStats(stats) {
+            try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) {}
+        }
+        function todayEntry(stats) {
+            const t = todayStr();
+            if (!stats[t]) stats[t] = {};
+            if (!stats[t].add) stats[t].add = { correct: 0, wrong: 0 };
+            if (!stats[t].sub) stats[t].sub = { correct: 0, wrong: 0 };
+            return stats[t];
+        }
+        // 回答を1件記録して、今日の正解数を返す
+        function recordAnswer(isCorrect) {
+            const stats = loadStats();
+            const entry = todayEntry(stats);
+            if (isCorrect) entry[OP].correct++;
+            else entry[OP].wrong++;
+            saveStats(stats);
+            return entry[OP].correct;
         }
         function refreshCount() {
-            store = loadStore();
-            solvedCount = store[COUNT_FIELD] || 0;
+            solvedCount = todayEntry(loadStats())[OP].correct;
             solvedCountEl.textContent = solvedCount;
         }
 
-        let store = loadStore();
-        solvedCount = store[COUNT_FIELD] || 0;   // 保存済みの今日の正解数を復元
+        solvedCount = todayEntry(loadStats())[OP].correct;   // 今日の正解数を復元
         solvedCountEl.textContent = solvedCount;
 
         // ------- 回答ボタン（0〜10）を作る -------
@@ -396,11 +404,8 @@
                 btn.classList.add('correct');
                 Array.from(answerButtonsEl.children).forEach(b => b.disabled = true);
 
-                // 正解のときだけ +1 して保存（日付が変わっていれば 0 からカウント）
-                store = loadStore();
-                solvedCount = (store[COUNT_FIELD] || 0) + 1;
-                store[COUNT_FIELD] = solvedCount;
-                saveStore(store);
+                // 正解を記録してカウント更新
+                solvedCount = recordAnswer(true);
                 solvedCountEl.textContent = solvedCount;
 
                 // 少し待ってから次の問題へ
@@ -410,7 +415,8 @@
                     showProblem();
                 }, 1200);
             } else {
-                // 不正解 → カウントせず、もう一度
+                // 不正解 → 不正解を記録（せいかい かず は増えない）
+                recordAnswer(false);
                 hintTextEl.textContent = 'ちがうよ、もういちど！';
                 btn.classList.add('wrong');
                 setTimeout(() => btn.classList.remove('wrong'), 500);
