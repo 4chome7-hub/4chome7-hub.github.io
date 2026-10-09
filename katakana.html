@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ひらがな⇔カタカナ たいおうカード</title>
+    <style>
+        :root {
+            --bg-color: #f0f8ff;
+            --card-bg: #ffffff;
+            --primary-color: #4682b4;
+            --accent-color: #ff6347;
+            --hint-color: #3cb371;
+            --border-color: #e0e0e0;
+            --correct-color: #3cb371;
+            --wrong-color: #ff6347;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+            overflow-x: hidden;
+        }
+
+        #app {
+            text-align: center;
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 95%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            margin: 0 0 1rem;
+        }
+
+        .settings-area {
+            width: 100%;
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 0.8rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .settings-title {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .group-selector {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+
+        .group-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .control-btns {
+            margin-top: 8px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .mini-btn {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: #fff;
+        }
+
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .mode-selector label {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+        }
+
+        .tip-box {
+            width: 100%;
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 0.78rem;
+            color: #6d5300;
+            margin-bottom: 0.8rem;
+            text-align: left;
+            line-height: 1.4;
+        }
+
+        #error-msg {
+            color: red;
+            font-size: 0.8rem;
+            display: none;
+        }
+
+        .direction-label {
+            font-size: 0.95rem;
+            color: #888;
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+
+        .char-display {
+            width: 160px;
+            height: 160px;
+            border: 6px solid var(--primary-color);
+            border-radius: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 0.6rem;
+            background-color: #fffacd;
+        }
+
+        #main-char {
+            font-size: 100px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .prompt-hint {
+            font-size: 1.1rem;
+            color: var(--hint-color);
+            font-weight: bold;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .prompt-hint .emoji {
+            font-size: 1.6rem;
+        }
+
+        .choices {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 0.8rem;
+        }
+
+        .choice-btn {
+            font-size: 2.2rem;
+            font-weight: bold;
+            padding: 14px 0;
+            border-radius: 16px;
+            border: 3px solid var(--primary-color);
+            background: #fff;
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .choice-btn:active {
+            transform: translateY(2px);
+        }
+
+        .choice-btn.correct {
+            background: var(--correct-color);
+            border-color: var(--correct-color);
+            color: #fff;
+        }
+
+        .choice-btn.wrong {
+            background: var(--wrong-color);
+            border-color: var(--wrong-color);
+            color: #fff;
+        }
+
+        .choice-btn.disabled {
+            pointer-events: none;
+            opacity: 0.9;
+        }
+
+        .pair-reveal {
+            min-height: 2.6rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+        }
+
+        #next-button {
+            margin-top: 0.3rem;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #d44e38;
+        }
+
+        #next-button:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+
+        .other-apps {
+            width: 100%;
+            margin-top: 1.2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .other-apps-title {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .other-apps-links {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .other-apps-links a {
+            flex: 1;
+            min-width: 100px;
+            max-width: 140px;
+            padding: 10px 0;
+            font-size: 0.95rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+            background-color: var(--hint-color);
+            border-radius: 50px;
+            box-shadow: 0 4px 0 #2e8b57;
+        }
+
+        .other-apps-links a:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>ひらがな⇔カタカナ たいおうカード</h1>
+
+        <div class="tip-box">
+            💡 すでにひらがなが読めるなら「カタカナは、ひらがなのべつバージョンだよ」と伝えてあげると理解が早くなります。たとえば、ひらがなの「あ」はカタカナだと「ア」です。
+        </div>
+
+        <div class="settings-area">
+            <div class="settings-title">練習する「行（ぎょう）」をえらぼう</div>
+            <div class="group-selector" id="group-selector"></div>
+            <div class="control-btns">
+                <button class="mini-btn" onclick="selectAll(true)">ぜんぶ</button>
+                <button class="mini-btn" onclick="selectAll(false)">リセット</button>
+            </div>
+            <div class="mode-selector" id="mode-selector">
+                <label><input type="radio" name="mode" value="h2k" checked onchange="updateMode()">ひらがな→カタカナ</label>
+                <label><input type="radio" name="mode" value="k2h" onchange="updateMode()">カタカナ→ひらがな</label>
+                <label><input type="radio" name="mode" value="random" onchange="updateMode()">まぜて</label>
+            </div>
+        </div>
+
+        <div id="error-msg">練習するものを1つ以上選んでね！</div>
+
+        <div class="direction-label" id="direction-label"></div>
+
+        <div class="char-display">
+            <p id="main-char">...</p>
+        </div>
+
+        <div class="prompt-hint">
+            <span class="emoji" id="hint-emoji"></span>
+            <span id="hint-word"></span>
+        </div>
+
+        <div class="choices" id="choices"></div>
+
+        <div class="pair-reveal" id="pair-reveal"></div>
+
+        <button id="next-button" onclick="manualNext()">つぎへ</button>
+
+        <div class="other-apps">
+            <div class="other-apps-title">ほかのアプリ</div>
+            <div class="other-apps-links">
+                <a href="hiragana.html">ひらがな</a>
+                <a href="index.html">けいさん</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const hiraganaData = [
+            { char: 'あ', kata: 'ア', word: 'アリ', emoji: '🐜', group: 'あ行' },
+            { char: 'い', kata: 'イ', word: 'イヌ', emoji: '🐕', group: 'あ行' },
+            { char: 'う', kata: 'ウ', word: 'ウシ', emoji: '🐄', group: 'あ行' },
+            { char: 'え', kata: 'エ', word: 'エビ', emoji: '🍤', group: 'あ行' },
+            { char: 'お', kata: 'オ', word: 'オニ', emoji: '👹', group: 'あ行' },
+            { char: 'か', kata: 'カ', word: 'カメ', emoji: '🐢', group: 'か行' },
+            { char: 'き', kata: 'キ', word: 'キリン', emoji: '🦒', group: 'か行' },
+            { char: 'く', kata: 'ク', word: 'クマ', emoji: '🐻', group: 'か行' },
+            { char: 'け', kata: 'ケ', word: 'ケーキ', emoji: '🍰', group: 'か行' },
+            { char: 'こ', kata: 'コ', word: 'コアラ', emoji: '🐨', group: 'か行' },
+            { char: 'さ', kata: 'サ', word: 'サル', emoji: '🐒', group: 'さ行' },
+            { char: 'し', kata: 'シ', word: 'シカ', emoji: '🦌', group: 'さ行' },
+            { char: 'す', kata: 'ス', word: 'スズメ', emoji: '🐦', group: 'さ行' },
+            { char: 'せ', kata: 'セ', word: 'セミ', emoji: '🦗', group: 'さ行' },
+            { char: 'そ', kata: 'ソ', word: 'そり', emoji: '🛷', group: 'さ行' },
+            { char: 'た', kata: 'タ', word: 'タコ', emoji: '🐙', group: 'た行' },
+            { char: 'ち', kata: 'チ', word: 'チーズ', emoji: '🧀', group: 'た行' },
+            { char: 'つ', kata: 'ツ', word: 'ツル', emoji: '🦢', group: 'た行' },
+            { char: 'て', kata: 'テ', word: 'テントウムシ', emoji: '🐞', group: 'た行' },
+            { char: 'と', kata: 'ト', word: 'トラ', emoji: '🐅', group: 'た行' },
+            { char: 'な', kata: 'ナ', word: 'ナマケモノ', emoji: '🦥', group: 'な行' },
+            { char: 'に', kata: 'ニ', word: 'ニワトリ', emoji: '🐔', group: 'な行' },
+            { char: 'ぬ', kata: 'ヌ', word: 'ヌイぐるミ', emoji: '🧸', group: 'な行' },
+            { char: 'ね', kata: 'ネ', word: 'ネコ', emoji: '🐈', group: 'な行' },
+            { char: 'の', kata: 'ノ', word: 'ノコギリ', emoji: '⚙️', group: 'な行' },
+            { char: 'は', kata: 'ハ', word: 'ハチ', emoji: '🐝', group: 'は行' },
+            { char: 'ひ', kata: 'ヒ', word: 'ヒツジ', emoji: '🐑', group: 'は行' },
+            { char: 'ふ', kata: 'フ', word: 'フクロウ', emoji: '🦉', group: 'は行' },
+            { char: 'へ', kata: 'ヘ', word: 'ヘビ', emoji: '🐍', group: 'は行' },
+            { char: 'ほ', kata: 'ホ', word: 'ホタル', emoji: '✨', group: 'は行' },
+            { char: 'ば', kata: 'バ', word: 'バナナ', emoji: '🍌', group: 'ば行' },
+            { char: 'び', kata: 'ビ', word: 'ビスケット', emoji: '🍪', group: 'ば行' },
+            { char: 'ぶ', kata: 'ブ', word: 'ブタ', emoji: '🐷', group: 'ば行' },
+            { char: 'べ', kata: 'ベ', word: 'ベロ', emoji: '👅', group: 'ば行' },
+            { char: 'ぼ', kata: 'ボ', word: 'ボール', emoji: '⚽', group: 'ば行' },
+            { char: 'ぱ', kata: 'パ', word: 'パンダ', emoji: '🐼', group: 'ぱ行' },
+            { char: 'ぴ', kata: 'ピ', word: 'ピザ', emoji: '🍕', group: 'ぱ行' },
+            { char: 'ぷ', kata: 'プ', word: 'プリン', emoji: '🍮', group: 'ぱ行' },
+            { char: 'ぺ', kata: 'ペ', word: 'ペンギン', emoji: '🐧', group: 'ぱ行' },
+            { char: 'ぽ', kata: 'ポ', word: 'ポスト', emoji: '📮', group: 'ぱ行' },
+            { char: 'ま', kata: 'マ', word: 'マメ', emoji: '🫘', group: 'ま行' },
+            { char: 'み', kata: 'ミ', word: 'ミミズ', emoji: '🪱', group: 'ま行' },
+            { char: 'む', kata: 'ム', word: 'ムカデ', emoji: '🐛', group: 'ま行' },
+            { char: 'め', kata: 'メ', word: 'めがね', emoji: '👓', group: 'ま行' },
+            { char: 'も', kata: 'モ', word: 'モグラ', emoji: '🕳️', group: 'ま行' },
+            { char: 'や', kata: 'ヤ', word: 'ヤギ', emoji: '🐐', group: 'や行' },
+            { char: 'ゆ', kata: 'ユ', word: 'ユキダルマ', emoji: '⛄', group: 'や行' },
+            { char: 'よ', kata: 'ヨ', word: 'ヨット', emoji: '⛵', group: 'や行' },
+            { char: 'ら', kata: 'ラ', word: 'ライオン', emoji: '🦁', group: 'ら行' },
+            { char: 'り', kata: 'リ', word: 'リス', emoji: '🐿️', group: 'ら行' },
+            { char: 'る', kata: 'ル', word: 'ルーレット', emoji: '🎡', group: 'ら行' },
+            { char: 'れ', kata: 'レ', word: 'れもん', emoji: '🍋', group: 'ら行' },
+            { char: 'ろ', kata: 'ロ', word: 'ロウソク', emoji: '🕯️', group: 'ら行' },
+            { char: 'わ', kata: 'ワ', word: 'ワニ', emoji: '🐊', group: 'わ行' },
+            { char: 'を', kata: 'ヲ', word: '（を）', emoji: '⚓', group: 'わ行' },
+            { char: 'ん', kata: 'ン', word: '（ん）', emoji: '🔔', group: 'わ行' },
+            { char: 'が', kata: 'ガ', word: 'ガム', emoji: '🍬', group: 'が行' },
+            { char: 'ぎ', kata: 'ギ', word: 'ギター', emoji: '🎸', group: 'が行' },
+            { char: 'ぐ', kata: 'グ', word: 'グレープ', emoji: '🍇', group: 'が行' },
+            { char: 'げ', kata: 'ゲ', word: 'ゲーム', emoji: '🎮', group: 'が行' },
+            { char: 'ご', kata: 'ゴ', word: 'ゴリラ', emoji: '🦍', group: 'が行' },
+            { char: 'ざ', kata: 'ザ', word: 'ザリガニ', emoji: '🦐', group: 'ざ行' },
+            { char: 'じ', kata: 'ジ', word: 'じてんしゃ', emoji: '🚲', group: 'ざ行' },
+            { char: 'ず', kata: 'ズ', word: 'ずかん', emoji: '📖', group: 'ざ行' },
+            { char: 'ぜ', kata: 'ゼ', word: 'ゼリー', emoji: '🍮', group: 'ざ行' },
+            { char: 'ぞ', kata: 'ゾ', word: 'ぞう', emoji: '🐘', group: 'ざ行' },
+            { char: 'だ', kata: 'ダ', word: 'だるま', emoji: '🎎', group: 'だ行' },
+            { char: 'ぢ', kata: 'ヂ', word: '（ぢ）', emoji: '🌀', group: 'だ行' },
+            { char: 'づ', kata: 'ヅ', word: '（づ）', emoji: '💧', group: 'だ行' },
+            { char: 'で', kata: 'デ', word: 'でんしゃ', emoji: '🚃', group: 'だ行' },
+            { char: 'ど', kata: 'ド', word: 'ドーナツ', emoji: '🍩', group: 'だ行' }
+        ];
+
+        const groups = ['あ行', 'か行', 'が行', 'さ行', 'ざ行', 'た行', 'だ行', 'な行', 'は行', 'ば行', 'ぱ行', 'ま行', 'や行', 'ら行', 'わ行'];
+        const groupMapping = { a: 'あ行', k: 'か行', g: 'が行', s: 'さ行', z: 'ざ行', t: 'た行', d: 'だ行', n: 'な行', h: 'は行', b: 'ば行', p: 'ぱ行', m: 'ま行', y: 'や行', r: 'ら行', w: 'わ行' };
+
+        const masteryWeights = {};
+        hiraganaData.forEach(d => { masteryWeights[d.char] = 5; });
+
+        const mainCharEl = document.getElementById('main-char');
+        const hintEmojiEl = document.getElementById('hint-emoji');
+        const hintWordEl = document.getElementById('hint-word');
+        const choicesEl = document.getElementById('choices');
+        const pairRevealEl = document.getElementById('pair-reveal');
+        const directionLabelEl = document.getElementById('direction-label');
+        const groupSelectorEl = document.getElementById('group-selector');
+        const errorMsgEl = document.getElementById('error-msg');
+
+        let currentData = null;
+        let currentDirection = 'h2k';
+        let quizMode = 'h2k';
+        let selectedGroups = ['あ行'];
+        let autoNextTimeout = null;
+
+        function parseUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const gParam = urlParams.get('g');
+            if (gParam) {
+                const keys = gParam.split(',');
+                const mapped = keys.map(k => groupMapping[k.trim().toLowerCase()]).filter(v => v);
+                if (mapped.length > 0) selectedGroups = mapped;
+            }
+        }
+
+        function initSelector() {
+            groupSelectorEl.innerHTML = groups.map(g => `
+                <label class="group-item">
+                    <input type="checkbox" value="${g}" ${selectedGroups.includes(g) ? 'checked' : ''} onchange="updateGroups()">
+                    ${g.replace('行', '')}
+                </label>
+            `).join('');
+        }
+
+        function updateGroups() {
+            const checkboxes = groupSelectorEl.querySelectorAll('input:checked');
+            selectedGroups = Array.from(checkboxes).map(cb => cb.value);
+            if (selectedGroups.length === 0) {
+                errorMsgEl.style.display = 'block';
+            } else {
+                errorMsgEl.style.display = 'none';
+                startNewRound();
+            }
+        }
+
+        function selectAll(bool) {
+            groupSelectorEl.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = bool);
+            updateGroups();
+        }
+
+        function updateMode() {
+            quizMode = document.querySelector('input[name="mode"]:checked').value;
+            startNewRound();
+        }
+
+        function getWeightedRandom(dataList) {
+            const totalWeight = dataList.reduce((sum, item) => sum + masteryWeights[item.char], 0);
+            let random = Math.random() * totalWeight;
+            for (const item of dataList) {
+                if (random < masteryWeights[item.char]) return item;
+                random -= masteryWeights[item.char];
+            }
+            return dataList[0];
+        }
+
+        function shuffle(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function startNewRound() {
+            clearTimeout(autoNextTimeout);
+
+            if (selectedGroups.length === 0) return;
+
+            pairRevealEl.textContent = '';
+
+            const filteredData = hiraganaData.filter(d => selectedGroups.includes(d.group));
+            currentData = getWeightedRandom(filteredData);
+            currentDirection = quizMode === 'random' ? (Math.random() < 0.5 ? 'h2k' : 'k2h') : quizMode;
+
+            directionLabelEl.textContent = currentDirection === 'h2k' ? 'ひらがな → カタカナ' : 'カタカナ → ひらがな';
+            mainCharEl.textContent = currentDirection === 'h2k' ? currentData.char : currentData.kata;
+            hintEmojiEl.textContent = currentData.emoji;
+            hintWordEl.textContent = currentData.word;
+
+            const correctChoice = currentDirection === 'h2k' ? currentData.kata : currentData.char;
+
+            let pool = filteredData.filter(d => d.char !== currentData.char);
+            if (pool.length < 3) {
+                pool = hiraganaData.filter(d => d.char !== currentData.char);
+            }
+            const distractors = shuffle(pool).slice(0, 3).map(d => currentDirection === 'h2k' ? d.kata : d.char);
+
+            const options = shuffle([correctChoice, ...distractors]);
+
+            choicesEl.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.textContent = opt;
+                btn.onclick = () => selectAnswer(opt, btn, correctChoice);
+                choicesEl.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(choice, btnEl, correctChoice) {
+            choicesEl.querySelectorAll('.choice-btn').forEach(b => {
+                b.classList.add('disabled');
+                b.onclick = null;
+                if (b.textContent === correctChoice) {
+                    b.classList.add('correct');
+                }
+            });
+
+            const isCorrect = choice === correctChoice;
+            if (!isCorrect) {
+                btnEl.classList.add('wrong');
+            }
+
+            masteryWeights[currentData.char] = Math.max(1, Math.min(15, masteryWeights[currentData.char] + (isCorrect ? -1 : 2)));
+
+            pairRevealEl.textContent = `ひらがな「${currentData.char}」 ＝ カタカナ「${currentData.kata}」`;
+
+            autoNextTimeout = setTimeout(() => {
+                startNewRound();
+            }, 1800);
+        }
+
+        function manualNext() {
+            clearTimeout(autoNextTimeout);
+            startNewRound();
+        }
+
+        window.onload = () => {
+            parseUrlParams();
+            initSelector();
+            startNewRound();
+        };
+    </script>
+</body>
+</html>
