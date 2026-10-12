@@ -292,7 +292,7 @@
                 <button class="mini-btn" onclick="selectAll(false)">リセット</button>
             </div>
             <div class="mode-selector" id="mode-selector">
-                <label><input type="radio" name="mode" value="h2k" checked onchange="updateMode()">ひらがな→カタカナ</label>
+                <label><input type="radio" name="mode" value="h2k" onchange="updateMode()">ひらがな→カタカナ</label>
                 <label><input type="radio" name="mode" value="k2h" onchange="updateMode()">カタカナ→ひらがな</label>
                 <label><input type="radio" name="mode" value="random" onchange="updateMode()">まぜて</label>
             </div>
@@ -422,6 +422,39 @@
         let selectedGroups = ['あ行'];
         let autoNextTimeout = null;
 
+        const STORAGE_KEY_GROUPS = 'katakana_selectedGroups';
+        const STORAGE_KEY_MODE = 'katakana_quizMode';
+
+        function loadFromStorage() {
+            try {
+                const storedGroups = localStorage.getItem(STORAGE_KEY_GROUPS);
+                if (storedGroups) {
+                    const parsed = JSON.parse(storedGroups);
+                    if (Array.isArray(parsed) && parsed.every(g => groups.includes(g))) {
+                        selectedGroups = parsed;
+                    }
+                }
+                const storedMode = localStorage.getItem(STORAGE_KEY_MODE);
+                if (storedMode && ['h2k', 'k2h', 'random'].includes(storedMode)) {
+                    quizMode = storedMode;
+                }
+            } catch (e) {
+                // localStorageが使えない環境では無視してデフォルト値のまま進める
+            }
+        }
+
+        function saveGroupsToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY_GROUPS, JSON.stringify(selectedGroups));
+            } catch (e) {}
+        }
+
+        function saveModeToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY_MODE, quizMode);
+            } catch (e) {}
+        }
+
         function parseUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
             const gParam = urlParams.get('g');
@@ -441,9 +474,16 @@
             `).join('');
         }
 
+        function initModeSelector() {
+            document.querySelectorAll('input[name="mode"]').forEach(radio => {
+                radio.checked = radio.value === quizMode;
+            });
+        }
+
         function updateGroups() {
             const checkboxes = groupSelectorEl.querySelectorAll('input:checked');
             selectedGroups = Array.from(checkboxes).map(cb => cb.value);
+            saveGroupsToStorage();
             if (selectedGroups.length === 0) {
                 errorMsgEl.style.display = 'block';
             } else {
@@ -459,6 +499,7 @@
 
         function updateMode() {
             quizMode = document.querySelector('input[name="mode"]:checked').value;
+            saveModeToStorage();
             startNewRound();
         }
 
@@ -546,8 +587,10 @@
         }
 
         window.onload = () => {
+            loadFromStorage();
             parseUrlParams();
             initSelector();
+            initModeSelector();
             startNewRound();
         };
     </script>
