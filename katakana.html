@@ -155,6 +155,14 @@
             margin: 0;
         }
 
+        .timer-text {
+            font-size: 0.95rem;
+            color: #ff8c00;
+            font-weight: bold;
+            margin-bottom: 0.4rem;
+            min-height: 1.2rem;
+        }
+
         .prompt-hint {
             font-size: 1.1rem;
             color: var(--hint-color);
@@ -164,6 +172,13 @@
             align-items: center;
             gap: 6px;
             justify-content: center;
+            min-height: 2.2rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .prompt-hint.visible {
+            opacity: 1;
         }
 
         .prompt-hint .emoji {
@@ -306,7 +321,9 @@
             <p id="main-char">...</p>
         </div>
 
-        <div class="prompt-hint">
+        <div class="timer-text" id="timer-text"></div>
+
+        <div class="prompt-hint" id="prompt-hint">
             <span class="emoji" id="hint-emoji"></span>
             <span id="hint-word"></span>
         </div>
@@ -410,17 +427,23 @@
         const mainCharEl = document.getElementById('main-char');
         const hintEmojiEl = document.getElementById('hint-emoji');
         const hintWordEl = document.getElementById('hint-word');
+        const promptHintEl = document.getElementById('prompt-hint');
+        const timerTextEl = document.getElementById('timer-text');
         const choicesEl = document.getElementById('choices');
         const pairRevealEl = document.getElementById('pair-reveal');
         const directionLabelEl = document.getElementById('direction-label');
         const groupSelectorEl = document.getElementById('group-selector');
         const errorMsgEl = document.getElementById('error-msg');
 
+        const HINT_DELAY_SECONDS = 5;
+
         let currentData = null;
         let currentDirection = 'h2k';
         let quizMode = 'h2k';
         let selectedGroups = ['あ行'];
         let autoNextTimeout = null;
+        let hintTimeout = null;
+        let hintTimerInterval = null;
 
         const STORAGE_KEY_GROUPS = 'katakana_selectedGroups';
         const STORAGE_KEY_MODE = 'katakana_quizMode';
@@ -524,10 +547,15 @@
 
         function startNewRound() {
             clearTimeout(autoNextTimeout);
+            clearTimeout(hintTimeout);
+            clearInterval(hintTimerInterval);
 
             if (selectedGroups.length === 0) return;
 
             pairRevealEl.textContent = '';
+            promptHintEl.classList.remove('visible');
+            hintEmojiEl.textContent = '';
+            hintWordEl.textContent = '';
 
             const filteredData = hiraganaData.filter(d => selectedGroups.includes(d.group));
             currentData = getWeightedRandom(filteredData);
@@ -535,8 +563,24 @@
 
             directionLabelEl.textContent = currentDirection === 'h2k' ? 'ひらがな → カタカナ' : 'カタカナ → ひらがな';
             mainCharEl.textContent = currentDirection === 'h2k' ? currentData.char : currentData.kata;
-            hintEmojiEl.textContent = currentData.emoji;
-            hintWordEl.textContent = currentData.word;
+
+            let secondsLeft = HINT_DELAY_SECONDS;
+            timerTextEl.textContent = `ヒントまで ${secondsLeft}びょう`;
+            hintTimerInterval = setInterval(() => {
+                secondsLeft--;
+                if (secondsLeft > 0) {
+                    timerTextEl.textContent = `ヒントまで ${secondsLeft}びょう`;
+                } else {
+                    clearInterval(hintTimerInterval);
+                    timerTextEl.textContent = '';
+                }
+            }, 1000);
+
+            hintTimeout = setTimeout(() => {
+                hintEmojiEl.textContent = currentData.emoji;
+                hintWordEl.textContent = currentData.word;
+                promptHintEl.classList.add('visible');
+            }, HINT_DELAY_SECONDS * 1000);
 
             const correctChoice = currentDirection === 'h2k' ? currentData.kata : currentData.char;
 
@@ -559,6 +603,10 @@
         }
 
         function selectAnswer(choice, btnEl, correctChoice) {
+            clearTimeout(hintTimeout);
+            clearInterval(hintTimerInterval);
+            timerTextEl.textContent = '';
+
             choicesEl.querySelectorAll('.choice-btn').forEach(b => {
                 b.classList.add('disabled');
                 b.onclick = null;
