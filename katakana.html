@@ -110,6 +110,86 @@
             cursor: pointer;
         }
 
+        .count-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        .count-selector input {
+            width: 4em;
+            font-size: 1rem;
+            padding: 3px 6px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        .progress-text {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.4rem;
+        }
+
+        .overlay-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .overlay-backdrop.visible {
+            display: flex;
+        }
+
+        .overlay-box {
+            background: #fff;
+            border-radius: 24px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            max-width: 320px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .overlay-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--hint-color);
+            margin: 0 0 0.6rem;
+        }
+
+        .overlay-sub {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 1.3rem;
+        }
+
+        .overlay-btn {
+            padding: 12px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #d44e38;
+        }
+
+        .overlay-btn:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+
         .tip-box {
             width: 100%;
             background: #fff8e1;
@@ -311,9 +391,16 @@
                 <label><input type="radio" name="mode" value="k2h" onchange="updateMode()">カタカナ→ひらがな</label>
                 <label><input type="radio" name="mode" value="random" onchange="updateMode()">まぜて</label>
             </div>
+            <div class="count-selector">
+                <label for="target-count-input">もんだいすう</label>
+                <input type="number" id="target-count-input" min="1" max="99" step="1" onchange="updateTargetCount()">
+                <span>もん</span>
+            </div>
         </div>
 
         <div id="error-msg">練習するものを1つ以上選んでね！</div>
+
+        <div class="progress-text" id="progress-text"></div>
 
         <div class="direction-label" id="direction-label"></div>
 
@@ -340,6 +427,14 @@
                 <a href="hiragana.html">ひらがな</a>
                 <a href="index.html">けいさん</a>
             </div>
+        </div>
+    </div>
+
+    <div class="overlay-backdrop" id="clear-overlay">
+        <div class="overlay-box">
+            <div class="overlay-title">🎉 よくできました！ 🎉</div>
+            <div class="overlay-sub" id="overlay-sub"></div>
+            <button class="overlay-btn" onclick="restartAfterClear()">もういちど</button>
         </div>
     </div>
 
@@ -434,8 +529,13 @@
         const directionLabelEl = document.getElementById('direction-label');
         const groupSelectorEl = document.getElementById('group-selector');
         const errorMsgEl = document.getElementById('error-msg');
+        const targetCountInputEl = document.getElementById('target-count-input');
+        const progressTextEl = document.getElementById('progress-text');
+        const clearOverlayEl = document.getElementById('clear-overlay');
+        const overlaySubEl = document.getElementById('overlay-sub');
 
         const HINT_DELAY_SECONDS = 5;
+        const DEFAULT_TARGET_COUNT = 10;
 
         let currentData = null;
         let currentDirection = 'h2k';
@@ -444,9 +544,12 @@
         let autoNextTimeout = null;
         let hintTimeout = null;
         let hintTimerInterval = null;
+        let targetCount = DEFAULT_TARGET_COUNT;
+        let answeredCount = 0;
 
         const STORAGE_KEY_GROUPS = 'katakana_selectedGroups';
         const STORAGE_KEY_MODE = 'katakana_quizMode';
+        const STORAGE_KEY_TARGET_COUNT = 'katakana_targetCount';
 
         function loadFromStorage() {
             try {
@@ -460,6 +563,10 @@
                 const storedMode = localStorage.getItem(STORAGE_KEY_MODE);
                 if (storedMode && ['h2k', 'k2h', 'random'].includes(storedMode)) {
                     quizMode = storedMode;
+                }
+                const storedTarget = parseInt(localStorage.getItem(STORAGE_KEY_TARGET_COUNT), 10);
+                if (Number.isInteger(storedTarget) && storedTarget >= 1) {
+                    targetCount = storedTarget;
                 }
             } catch (e) {
                 // localStorageが使えない環境では無視してデフォルト値のまま進める
@@ -475,6 +582,12 @@
         function saveModeToStorage() {
             try {
                 localStorage.setItem(STORAGE_KEY_MODE, quizMode);
+            } catch (e) {}
+        }
+
+        function saveTargetCountToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY_TARGET_COUNT, String(targetCount));
             } catch (e) {}
         }
 
@@ -501,6 +614,35 @@
             document.querySelectorAll('input[name="mode"]').forEach(radio => {
                 radio.checked = radio.value === quizMode;
             });
+        }
+
+        function initTargetCountInput() {
+            targetCountInputEl.value = targetCount;
+        }
+
+        function updateProgressText() {
+            progressTextEl.textContent = `${answeredCount} / ${targetCount} もん`;
+        }
+
+        function updateTargetCount() {
+            const value = parseInt(targetCountInputEl.value, 10);
+            targetCount = Number.isInteger(value) && value >= 1 ? value : DEFAULT_TARGET_COUNT;
+            targetCountInputEl.value = targetCount;
+            saveTargetCountToStorage();
+            answeredCount = 0;
+            updateProgressText();
+        }
+
+        function showClearOverlay() {
+            overlaySubEl.textContent = `${targetCount}もん れんしゅうしたよ！`;
+            clearOverlayEl.classList.add('visible');
+        }
+
+        function restartAfterClear() {
+            clearOverlayEl.classList.remove('visible');
+            answeredCount = 0;
+            updateProgressText();
+            startNewRound();
         }
 
         function updateGroups() {
@@ -624,14 +766,25 @@
 
             pairRevealEl.textContent = `ひらがな「${currentData.char}」 ＝ カタカナ「${currentData.kata}」`;
 
+            answeredCount++;
+            updateProgressText();
+
             autoNextTimeout = setTimeout(() => {
-                startNewRound();
+                proceedToNext();
             }, 1800);
+        }
+
+        function proceedToNext() {
+            if (answeredCount >= targetCount) {
+                showClearOverlay();
+            } else {
+                startNewRound();
+            }
         }
 
         function manualNext() {
             clearTimeout(autoNextTimeout);
-            startNewRound();
+            proceedToNext();
         }
 
         window.onload = () => {
@@ -639,6 +792,8 @@
             parseUrlParams();
             initSelector();
             initModeSelector();
+            initTargetCountInput();
+            updateProgressText();
             startNewRound();
         };
     </script>
