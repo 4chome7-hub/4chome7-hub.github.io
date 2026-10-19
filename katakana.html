@@ -235,12 +235,24 @@
             margin: 0;
         }
 
-        .timer-text {
+        .hint-btn {
             font-size: 0.95rem;
-            color: #ff8c00;
             font-weight: bold;
+            color: var(--hint-color);
+            background: #fff;
+            border: 2px solid var(--hint-color);
+            border-radius: 50px;
+            padding: 6px 16px;
             margin-bottom: 0.4rem;
-            min-height: 1.2rem;
+            cursor: pointer;
+        }
+
+        .hint-btn:active {
+            transform: translateY(2px);
+        }
+
+        .hint-btn.used {
+            visibility: hidden;
         }
 
         .prompt-hint {
@@ -408,7 +420,7 @@
             <p id="main-char">...</p>
         </div>
 
-        <div class="timer-text" id="timer-text"></div>
+        <button class="hint-btn" id="hint-btn" onclick="revealHint()">💡 ヒントをみる</button>
 
         <div class="prompt-hint" id="prompt-hint">
             <span class="emoji" id="hint-emoji"></span>
@@ -523,7 +535,7 @@
         const hintEmojiEl = document.getElementById('hint-emoji');
         const hintWordEl = document.getElementById('hint-word');
         const promptHintEl = document.getElementById('prompt-hint');
-        const timerTextEl = document.getElementById('timer-text');
+        const hintBtnEl = document.getElementById('hint-btn');
         const choicesEl = document.getElementById('choices');
         const pairRevealEl = document.getElementById('pair-reveal');
         const directionLabelEl = document.getElementById('direction-label');
@@ -534,7 +546,6 @@
         const clearOverlayEl = document.getElementById('clear-overlay');
         const overlaySubEl = document.getElementById('overlay-sub');
 
-        const HINT_DELAY_SECONDS = 5;
         const DEFAULT_TARGET_COUNT = 10;
 
         let currentData = null;
@@ -542,8 +553,6 @@
         let quizMode = 'h2k';
         let selectedGroups = ['あ行'];
         let autoNextTimeout = null;
-        let hintTimeout = null;
-        let hintTimerInterval = null;
         let targetCount = DEFAULT_TARGET_COUNT;
         let answeredCount = 0;
 
@@ -689,8 +698,6 @@
 
         function startNewRound() {
             clearTimeout(autoNextTimeout);
-            clearTimeout(hintTimeout);
-            clearInterval(hintTimerInterval);
 
             if (selectedGroups.length === 0) return;
 
@@ -698,6 +705,8 @@
             promptHintEl.classList.remove('visible');
             hintEmojiEl.textContent = '';
             hintWordEl.textContent = '';
+            hintBtnEl.classList.remove('used');
+            hintBtnEl.disabled = false;
 
             const filteredData = hiraganaData.filter(d => selectedGroups.includes(d.group));
             currentData = getWeightedRandom(filteredData);
@@ -705,24 +714,6 @@
 
             directionLabelEl.textContent = currentDirection === 'h2k' ? 'ひらがな → カタカナ' : 'カタカナ → ひらがな';
             mainCharEl.textContent = currentDirection === 'h2k' ? currentData.char : currentData.kata;
-
-            let secondsLeft = HINT_DELAY_SECONDS;
-            timerTextEl.textContent = `ヒントまで ${secondsLeft}びょう`;
-            hintTimerInterval = setInterval(() => {
-                secondsLeft--;
-                if (secondsLeft > 0) {
-                    timerTextEl.textContent = `ヒントまで ${secondsLeft}びょう`;
-                } else {
-                    clearInterval(hintTimerInterval);
-                    timerTextEl.textContent = '';
-                }
-            }, 1000);
-
-            hintTimeout = setTimeout(() => {
-                hintEmojiEl.textContent = currentData.emoji;
-                hintWordEl.textContent = currentData.word;
-                promptHintEl.classList.add('visible');
-            }, HINT_DELAY_SECONDS * 1000);
 
             const correctChoice = currentDirection === 'h2k' ? currentData.kata : currentData.char;
 
@@ -744,10 +735,16 @@
             });
         }
 
+        function revealHint() {
+            hintEmojiEl.textContent = currentData.emoji;
+            hintWordEl.textContent = currentData.word;
+            promptHintEl.classList.add('visible');
+            hintBtnEl.classList.add('used');
+            hintBtnEl.disabled = true;
+        }
+
         function selectAnswer(choice, btnEl, correctChoice) {
-            clearTimeout(hintTimeout);
-            clearInterval(hintTimerInterval);
-            timerTextEl.textContent = '';
+            hintBtnEl.disabled = true;
 
             choicesEl.querySelectorAll('.choice-btn').forEach(b => {
                 b.classList.add('disabled');
