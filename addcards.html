@@ -109,6 +109,11 @@
             color: var(--answer-color);
         }
 
+        /* 3項など長い式は少し小さく */
+        #card-text.small {
+            font-size: 3.4rem;
+        }
+
         .hint-text {
             font-size: 0.95rem;
             color: #999;
@@ -246,6 +251,7 @@
 
             .flash-card { min-height: 0; flex: 1; margin-bottom: 0.4rem; }
             #card-text { font-size: 3.6rem; }
+            #card-text.small { font-size: 2.5rem; }
             .hint-text { min-height: 1.1rem; margin-bottom: 0.4rem; }
             .answer-btn { width: 44px; height: 44px; font-size: 1.2rem; }
             .answer-buttons { gap: 6px; margin-bottom: 0; }
@@ -283,32 +289,45 @@
     </div>
 
     <script>
-        // ------- 出題データ（1〜9 + 1〜9・答えが10以下のランダム表示）-------
-        function buildDeck() {
-            const deck = [];
-            for (let a = 1; a <= 9; a++) {
-                for (let b = 1; b <= 9; b++) {
-                    if (a + b <= 10) {   // 答えが10以下の問題だけ
-                        deck.push({ a, b });
-                    }
-                }
+        // ------- 出題データ -------
+        // 3種類をまぜて出題する：
+        //  ・2項（答え10まで）
+        //  ・2項のくりあがり（答え11〜18）
+        //  ・3項（とちゅうの計算(a+b)も答え(a+b+c)も10〜19）
+        function randInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        function makeProblem() {
+            const r = Math.random();
+            if (r < 0.34) {
+                // 2項・答え10まで
+                let a, b;
+                do { a = randInt(1, 9); b = randInt(1, 9); } while (a + b > 10);
+                return [a, b];
+            } else if (r < 0.67) {
+                // 2項・くりあがり（答え11〜18）
+                let a, b;
+                do { a = randInt(2, 9); b = randInt(2, 9); } while (a + b < 11 || a + b > 18);
+                return [a, b];
+            } else {
+                // 3項・とちゅうの計算(a+b)も答え(a+b+c)も10〜19
+                let a, b, c;
+                do {
+                    a = randInt(1, 9); b = randInt(1, 9); c = randInt(1, 9);
+                } while (a + b < 10 || a + b > 19 || a + b + c < 10 || a + b + c > 19);
+                return [a, b, c];
             }
-            // シャッフル（Fisher–Yates）
-            for (let i = deck.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [deck[i], deck[j]] = [deck[j], deck[i]];
-            }
-            return deck;
+        }
+        function sameTerms(x, y) {
+            return x.length === y.length && x.every((v, i) => v === y[i]);
         }
 
         // 答えの範囲（回答ボタンの数字）
-        const ANSWER_MIN = 0;
-        const ANSWER_MAX = 10;
+        const ANSWER_MIN = 2;
+        const ANSWER_MAX = 19;
 
         // ------- 状態 -------
-        let deck = buildDeck();
-        let deckIndex = 0;
-        let current = null;      // { a, b }
+        let current = null;      // { terms: [...] }
         let answered = false;    // 現在の問題に正解済みか
         let advanceTimer = null; // 正解後に次へ進むタイマー
         let solvedCount = 0;     // 正解した回数
@@ -358,7 +377,7 @@
         solvedCount = todayEntry(loadStats())[OP].correct;   // 今日の正解数を復元
         solvedCountEl.textContent = solvedCount;
 
-        // ------- 回答ボタン（0〜10）を作る -------
+        // ------- 回答ボタン（2〜19）を作る -------
         function buildAnswerButtons() {
             answerButtonsEl.innerHTML = '';
             for (let n = ANSWER_MIN; n <= ANSWER_MAX; n++) {
@@ -371,18 +390,16 @@
         }
 
         function drawNext() {
-            if (deckIndex >= deck.length) {
-                // 一巡したら再シャッフル
-                deck = buildDeck();
-                deckIndex = 0;
-            }
-            current = deck[deckIndex++];
+            let next;
+            do { next = makeProblem(); } while (current && sameTerms(next, current.terms));
+            current = { terms: next };
         }
 
         function showProblem() {
             answered = false;
             cardTextEl.classList.remove('answered');
-            cardTextEl.textContent = `${current.a} + ${current.b} =`;
+            cardTextEl.classList.toggle('small', current.terms.length >= 3);
+            cardTextEl.textContent = current.terms.join(' + ') + ' =';
             hintTextEl.textContent = 'こたえのボタンをおしてね！';
             // ボタンの見た目・有効状態をリセット
             Array.from(answerButtonsEl.children).forEach(b => {
@@ -393,13 +410,13 @@
 
         function checkAnswer(n, btn) {
             if (answered) return;   // すでに正解済みなら無視
-            const correct = current.a + current.b;
+            const correct = current.terms.reduce((s, v) => s + v, 0);
 
             if (n === correct) {
                 // 正解 → 答えを表示してカウントアップ
                 answered = true;
                 cardTextEl.classList.add('answered');
-                cardTextEl.textContent = `${current.a} + ${current.b} = ${correct}`;
+                cardTextEl.textContent = current.terms.join(' + ') + ' = ' + correct;
                 hintTextEl.textContent = 'せいかい！🎉';
                 btn.classList.add('correct');
                 Array.from(answerButtonsEl.children).forEach(b => b.disabled = true);
@@ -435,8 +452,6 @@
         function resetAll(e) {
             e.stopPropagation();
             clearTimeout(advanceTimer);
-            deck = buildDeck();
-            deckIndex = 0;
             drawNext();
             showProblem();
             // せいかい かず は1日の合計なので消さない（日付が変わると自動リセット）
